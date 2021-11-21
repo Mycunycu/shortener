@@ -17,7 +17,13 @@ func ShortenURL(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 500)
 			return
 		}
+		
 		fmt.Println(string(b))
+		resp := "http://lanmntrzhka.biz/asmi8wsniw5no/x4iuisztv4"
+
+		w.Header().Set("content-type", "text/html; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(resp))
 
 	case http.MethodGet:
 		id := getID(r)
