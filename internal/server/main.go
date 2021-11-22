@@ -19,6 +19,7 @@ func NewServer(port string) *Server {
 }
 
 func (s *Server) Run() error {
-	http.HandleFunc("/", handlers.ShortenURL)
+	http.HandleFunc("/", handlers.ProcessURL)
+
 	return s.ListenAndServe()
 }
