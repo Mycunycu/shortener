@@ -60,9 +60,8 @@ func ProcessURL(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println(resp)
 
-		w.WriteHeader(http.StatusTemporaryRedirect)
 		w.Header().Set("Location", resp)
-		w.Header().Write(w)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 		return
 	default:
 		http.Error(w, "Only POST and GET requests are allowed!", http.StatusBadRequest)
