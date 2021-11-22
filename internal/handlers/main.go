@@ -6,49 +6,66 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
+
+var urls = make(map[string]string)
+var baseShortUrl = "http://localhost:8080/"
+var id int64 = 0
 
 func ShortenURL(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		b, err := io.ReadAll(r.Body)
+		bOrigUrl, err := io.ReadAll(r.Body)
 		defer r.Body.Close()
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		
-		fmt.Println(string(b))
-		resp := "http://lanmntrzhka.biz/asmi8wsniw5no/x4iuisztv4"
 
+		if len(bOrigUrl) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		sOrigUrl := string(bOrigUrl)
+		id := atomic.AddInt64(&id, 1)
+		idString := strconv.Itoa(int(id))
+		urls[idString] = sOrigUrl
+
+		resp := baseShortUrl + idString
+		
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(resp))
 
 	case http.MethodGet:
 		id := getID(r)
-		if id == 0 {
+		if id == "" {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
 		}
+
+		resp := urls[id]
+		fmt.Println(resp)
+
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Header().Set("Location", resp)
+		w.Header().Write(w)
 		return
+
 	default:
-		http.Error(w, "Only POST and GET requests are allowed!", http.StatusMethodNotAllowed)
+		http.Error(w, "Only POST and GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
 }
 
-func getID(r *http.Request) int {
+func getID(r *http.Request) string {
 	p := strings.Split(r.URL.Path, "/")
 
-	if len(p) == 2 {
-		id, err := strconv.Atoi(p[1])
-		if err != nil {
-			return 0
-		}
-
-		return id
+	if len(p) > 1 {
+		return p[1]
 	}
 
-	return 0
+	return ""
 }
