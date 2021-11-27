@@ -2,24 +2,20 @@ package server
 
 import (
 	"net/http"
-
-	"github.com/Mycunycu/shortener/internal/handlers"
 )
 
 type Server struct {
 	*http.Server
 }
 
-func NewServer(port string) *Server {
+func NewServer(port string, handler http.Handler) *Server {
 	srv := &Server{
-		&http.Server{Addr: port},
+		&http.Server{Addr: port, Handler: handler},
 	}
 
 	return srv
 }
 
 func (s *Server) Run() error {
-	http.HandleFunc("/", handlers.ProcessURL)
-
 	return s.ListenAndServe()
 }
