@@ -8,13 +8,12 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
 )
 
 var mu = &sync.RWMutex{}
-var urls map[string]string = map[string]string{
-	"0": "https://github.com/",
-}
+var urls = make(map[string]string)
 
 var baseShortURL = "http://localhost:8080/"
 var id int64 = 0
@@ -29,6 +28,12 @@ func ShortenURL() http.HandlerFunc {
 		}
 
 		if len(bOrigURL) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		validURL := govalidator.IsURL(string(bOrigURL))
+		if !validURL {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -57,8 +62,12 @@ func ExpandURL() http.HandlerFunc {
 		}
 
 		mu.RLock()
-		resp := urls[id]
+		resp, ok := urls[id]
 		mu.RUnlock()
+		if !ok {
+			http.Error(w, "No have data", http.StatusNoContent)
+			return
+		}
 
 		fmt.Println(resp)
 

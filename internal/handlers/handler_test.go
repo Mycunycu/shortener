@@ -19,28 +19,49 @@ func TestShortenURL(t *testing.T) {
 		statusCode  int
 		body        string
 	}
+	path := "localhost:8080"
 
 	tests := []struct {
-		name    string
-		request string
-		body    string
-		want    want
+		name string
+		path string
+		body string
+		want want
 	}{
 		{
-			name:    "happy path",
-			request: "localhost:8080",
-			body:    "https://github.com/",
+			name: "happy path",
+			path: path,
+			body: "https://test.com",
 			want: want{
 				contentType: "text/html; charset=UTF-8",
 				statusCode:  201,
 				body:        "http://localhost:8080/1",
 			},
 		},
+		{
+			name: "empty body",
+			path: path,
+			body: "",
+			want: want{
+				contentType: "",
+				statusCode:  400,
+				body:        "",
+			},
+		},
+		{
+			name: "invalid body",
+			path: path,
+			body: "https:/test.com",
+			want: want{
+				contentType: "",
+				statusCode:  400,
+				body:        "",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
+			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 			h := ShortenURL()
 
@@ -63,32 +84,45 @@ func TestShortenURL(t *testing.T) {
 }
 
 func TestExpandURL(t *testing.T) {
+	path := "localhost:8080"
+
 	type want struct {
 		statusCode  int
 		headerValue string
 	}
 
 	tests := []struct {
-		name    string
-		request string
-		want    want
+		name string
+		path string
+		id   string
+		want want
 	}{
 		{
-			name:    "happy path",
-			request: "localhost:8080",
+			name: "happy path",
+			path: path,
+			id:   "1",
 			want: want{
 				statusCode:  307,
-				headerValue: "https://github.com/",
+				headerValue: "https://test.com",
+			},
+		},
+		{
+			name: "no have data",
+			path: path,
+			id:   "2",
+			want: want{
+				statusCode:  204,
+				headerValue: "",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, tt.request, nil)
+			request := httptest.NewRequest(http.MethodGet, tt.path, nil)
 
 			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", "0")
+			rctx.URLParams.Add("id", tt.id)
 
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
