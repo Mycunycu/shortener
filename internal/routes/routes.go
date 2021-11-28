@@ -18,8 +18,8 @@ func NewRouter() *Router {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/", handlers.ShortenURL)
-	r.Get("/{id}", handlers.ExpandURL)
+	r.Post("/", handlers.ShortenURL())
+	r.Get("/{id}", handlers.ExpandURL())
 
 	return &Router{r}
 }

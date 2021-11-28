@@ -9,11 +9,9 @@ type Server struct {
 }
 
 func NewServer(port string, handler http.Handler) *Server {
-	srv := &Server{
+	return &Server{
 		&http.Server{Addr: port, Handler: handler},
 	}
-
-	return srv
 }
 
 func (s *Server) Run() error {
