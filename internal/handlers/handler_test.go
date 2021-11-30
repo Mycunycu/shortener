@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +64,8 @@ func TestShortenURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
-			h := ShortenURL()
+			repo := repository.NewShortURL()
+			h := NewHandler(repo).ShortenURL()
 
 			h.ServeHTTP(w, request)
 
@@ -127,8 +129,10 @@ func TestExpandURL(t *testing.T) {
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
-			h := ExpandURL()
+			repo := repository.NewShortURL()
+			repo.Set("https://test.com")
 
+			h := NewHandler(repo).ExpandURL()
 			h.ServeHTTP(w, request)
 
 			result := w.Result()

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/Mycunycu/shortener/internal/handlers"
+	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -18,8 +19,11 @@ func NewRouter() *Router {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/", handlers.ShortenURL())
-	r.Get("/{id}", handlers.ExpandURL())
+	repo := repository.NewShortURL()
+	h := handlers.NewHandler(repo)
+
+	r.Post("/", h.ShortenURL())
+	r.Get("/{id}", h.ExpandURL())
 
 	return &Router{r}
 }

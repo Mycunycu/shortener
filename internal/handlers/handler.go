@@ -1,24 +1,25 @@
 package handlers
 
 import (
-	"fmt"
 	"io"
 	"net/http"
-	"strconv"
-	"sync"
-	"sync/atomic"
 
+	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
 )
 
-var mu = &sync.RWMutex{}
-var urls = make(map[string]string)
+const baseShortURL = "http://localhost:8080/"
 
-var baseShortURL = "http://localhost:8080/"
-var id int64 = 0
+type Handler struct {
+	repo repository.URLRepository
+}
 
-func ShortenURL() http.HandlerFunc {
+func NewHandler(r repository.URLRepository) *Handler {
+	return &Handler{repo: r}
+}
+
+func (h *Handler) ShortenURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bOrigURL, err := io.ReadAll(r.Body)
 		defer r.Body.Close()
@@ -32,20 +33,15 @@ func ShortenURL() http.HandlerFunc {
 			return
 		}
 
-		validURL := govalidator.IsURL(string(bOrigURL))
+		sOrigURL := string(bOrigURL)
+		validURL := govalidator.IsURL(sOrigURL)
 		if !validURL {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		id := atomic.AddInt64(&id, 1)
-		idString := strconv.Itoa(int(id))
-
-		mu.Lock()
-		urls[idString] = string(bOrigURL)
-		mu.Unlock()
-
-		resp := baseShortURL + idString
+		id := h.repo.Set(sOrigURL)
+		resp := baseShortURL + id
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -53,7 +49,7 @@ func ShortenURL() http.HandlerFunc {
 	}
 }
 
-func ExpandURL() http.HandlerFunc {
+func (h *Handler) ExpandURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -61,15 +57,11 @@ func ExpandURL() http.HandlerFunc {
 			return
 		}
 
-		mu.RLock()
-		resp, ok := urls[id]
-		mu.RUnlock()
-		if !ok {
-			http.Error(w, "No have data", http.StatusNoContent)
+		resp, err := h.repo.GetById(id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNoContent)
 			return
 		}
-
-		fmt.Println(resp)
 
 		w.Header().Set("Location", resp)
 		w.WriteHeader(http.StatusTemporaryRedirect)
