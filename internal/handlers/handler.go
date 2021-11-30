@@ -57,7 +57,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 			return
 		}
 
-		resp, err := h.repo.GetById(id)
+		resp, err := h.repo.GetByID(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNoContent)
 			return

@@ -31,7 +31,7 @@ func (s *ShortURL) Set(url string) string {
 
 	return idString
 }
-func (s *ShortURL) GetById(id string) (string, error) {
+func (s *ShortURL) GetByID(id string) (string, error) {
 	s.mu.RLock()
 	url, ok := s.urls[id]
 	s.mu.RUnlock()
