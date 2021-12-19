@@ -1,9 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"io"
+	"log"
 	"net/http"
 
+	"github.com/Mycunycu/shortener/internal/helpers"
+	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
@@ -65,5 +70,43 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 
 		w.Header().Set("Location", resp)
 		w.WriteHeader(http.StatusTemporaryRedirect)
+	}
+}
+
+func (h *Handler) Shorten() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req models.ShortenRequest
+
+		err := helpers.DecodeJSONBody(w, r, &req)
+		if err != nil {
+			var br *helpers.BadRequest
+			if errors.As(err, &br) {
+				http.Error(w, br.Msg, br.Status)
+			} else {
+				log.Println(err.Error())
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		validURL := govalidator.IsURL(req.Url)
+		if !validURL {
+			http.Error(w, "Invalid URL field", http.StatusBadRequest)
+			return
+		}
+
+		id := h.repo.Set(req.Url)
+		result := baseShortURL + id
+		responce := models.ShortenResponce{Result: result}
+
+		jsonResp, err := json.Marshal(responce)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(jsonResp)
 	}
 }

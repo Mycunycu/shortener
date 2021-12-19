@@ -25,5 +25,7 @@ func NewRouter() *Router {
 	r.Post("/", h.ShortenURL())
 	r.Get("/{id}", h.ExpandURL())
 
+	r.Post("/api/shorten", h.Shorten())
+
 	return &Router{r}
 }
