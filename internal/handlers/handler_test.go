@@ -15,6 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var cfg = config.Config{
+	ServerAddress: "localhost:8080",
+	BaseURL:       "http://localhost:8080/",
+}
+
 func TestShortenURL(t *testing.T) {
 	type want struct {
 		contentType string
@@ -66,7 +71,7 @@ func TestShortenURL(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 			repo := repository.NewShortURL()
-			cfg := config.Get()
+
 			h := NewHandler(cfg, repo).ShortenURL()
 
 			h.ServeHTTP(w, request)
@@ -133,7 +138,6 @@ func TestExpandURL(t *testing.T) {
 			w := httptest.NewRecorder()
 			repo := repository.NewShortURL()
 			repo.Set("https://test.com")
-			cfg := config.Get()
 
 			h := NewHandler(cfg, repo).ExpandURL()
 			h.ServeHTTP(w, request)
@@ -199,9 +203,7 @@ func TestShorten(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 			repo := repository.NewShortURL()
-			cfg := config.Get()
 			h := NewHandler(cfg, repo).Shorten()
-
 			h.ServeHTTP(w, request)
 
 			result := w.Result()

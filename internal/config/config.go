@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 	"sync"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -15,18 +15,16 @@ type Config struct {
 var cfg Config
 
 func Get() Config {
+	initialize()
 	return cfg
 }
 
-func Init() error {
+func initialize() {
 	var once sync.Once
-	var err error
 
 	once.Do(func() {
-		if err = cleanenv.ReadConfig("config.yml", &cfg); err != nil {
-			err = fmt.Errorf("cleanenv.ReadConfig %w", err)
+		if err := cleanenv.ReadConfig("config.yml", &cfg); err != nil {
+			log.Fatalf("read config err: %v", err)
 		}
 	})
-
-	return err
 }

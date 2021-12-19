@@ -15,14 +15,7 @@ import (
 )
 
 func Run() error {
-	err := config.Init()
-	if err != nil {
-		return err
-	}
-
 	cfg := config.Get()
-
-	fmt.Println(cfg)
 
 	r := routes.NewRouter(cfg)
 	srv := server.NewServer(cfg.ServerAddress, r)
