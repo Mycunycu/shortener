@@ -143,3 +143,75 @@ func TestExpandURL(t *testing.T) {
 		})
 	}
 }
+
+func TestShorten(t *testing.T) {
+	type want struct {
+		contentType string
+		statusCode  int
+		body        string
+	}
+	path := "localhost:8080/api/shorten"
+
+	tests := []struct {
+		name string
+		path string
+		body string
+		want want
+	}{
+		{
+			name: "happy path",
+			path: path,
+			body: `{"url": "http://test.ru"}`,
+			want: want{
+				contentType: "application/json",
+				statusCode:  201,
+				body:        `{"result": "http://localhost:8080/1"}`,
+			},
+		},
+		// TODO add test cases
+		// {
+		// 	name: "empty body",
+		// 	path: path,
+		// 	body: "",
+		// 	want: want{
+		// 		contentType: "",
+		// 		statusCode:  400,
+		// 		body:        "",
+		// 	},
+		// },
+		// {
+		// 	name: "invalid body",
+		// 	path: path,
+		// 	body: "https:/test.com",
+		// 	want: want{
+		// 		contentType: "",
+		// 		statusCode:  400,
+		// 		body:        "",
+		// 	},
+		// },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
+			w := httptest.NewRecorder()
+			repo := repository.NewShortURL()
+			h := NewHandler(repo).Shorten()
+
+			h.ServeHTTP(w, request)
+
+			result := w.Result()
+			defer result.Body.Close()
+
+			assert.Equal(t, tt.want.statusCode, result.StatusCode)
+			assert.Equal(t, tt.want.contentType, result.Header.Get("Content-Type"))
+
+			bodyResult, err := ioutil.ReadAll(result.Body)
+			require.NoError(t, err)
+			err = result.Body.Close()
+			require.NoError(t, err)
+
+			assert.JSONEq(t, tt.want.body, string(bodyResult))
+		})
+	}
+}

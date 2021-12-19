@@ -89,13 +89,13 @@ func (h *Handler) Shorten() http.HandlerFunc {
 			return
 		}
 
-		validURL := govalidator.IsURL(req.Url)
+		validURL := govalidator.IsURL(req.URL)
 		if !validURL {
 			http.Error(w, "Invalid URL field", http.StatusBadRequest)
 			return
 		}
 
-		id := h.repo.Set(req.Url)
+		id := h.repo.Set(req.URL)
 		result := baseShortURL + id
 		responce := models.ShortenResponce{Result: result}
 
