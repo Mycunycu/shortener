@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Mycunycu/shortener/internal/config"
 	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/repository"
@@ -14,14 +15,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const baseShortURL = "http://localhost:8080/"
-
 type Handler struct {
+	cfg  config.Config
 	repo repository.URLRepository
 }
 
-func NewHandler(r repository.URLRepository) *Handler {
-	return &Handler{repo: r}
+func NewHandler(cfg config.Config, r repository.URLRepository) *Handler {
+	return &Handler{cfg: cfg, repo: r}
 }
 
 func (h *Handler) ShortenURL() http.HandlerFunc {
@@ -46,7 +46,7 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(sOrigURL)
-		resp := baseShortURL + id
+		resp := h.cfg.BaseURL + id
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -96,7 +96,7 @@ func (h *Handler) Shorten() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(req.URL)
-		result := baseShortURL + id
+		result := h.cfg.BaseURL + id
 		responce := models.ShortenResponce{Result: result}
 
 		jsonResp, err := json.Marshal(responce)

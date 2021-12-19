@@ -9,14 +9,23 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Mycunycu/shortener/internal/config"
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
 )
 
 func Run() error {
-	port := ":8080"
-	r := routes.NewRouter()
-	srv := server.NewServer(port, r)
+	err := config.Init()
+	if err != nil {
+		return err
+	}
+
+	cfg := config.Get()
+
+	fmt.Println(cfg)
+
+	r := routes.NewRouter(cfg)
+	srv := server.NewServer(cfg.ServerAddress, r)
 
 	go func() {
 		err := srv.Run()

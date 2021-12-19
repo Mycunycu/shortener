@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/Mycunycu/shortener/internal/config"
 	"github.com/Mycunycu/shortener/internal/handlers"
 	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/go-chi/chi/v5"
@@ -11,7 +12,7 @@ type Router struct {
 	*chi.Mux
 }
 
-func NewRouter() *Router {
+func NewRouter(cfg config.Config) *Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -20,7 +21,7 @@ func NewRouter() *Router {
 	r.Use(middleware.Recoverer)
 
 	repo := repository.NewShortURL()
-	h := handlers.NewHandler(repo)
+	h := handlers.NewHandler(cfg, repo)
 
 	r.Post("/", h.ShortenURL())
 	r.Get("/{id}", h.ExpandURL())
