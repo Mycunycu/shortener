@@ -26,7 +26,6 @@ func TestShortenURL(t *testing.T) {
 		statusCode  int
 		body        string
 	}
-	path := "localhost:8080"
 
 	tests := []struct {
 		name string
@@ -36,7 +35,7 @@ func TestShortenURL(t *testing.T) {
 	}{
 		{
 			name: "happy path",
-			path: path,
+			path: cfg.ServerAddress,
 			body: "https://test.com",
 			want: want{
 				contentType: "text/html; charset=UTF-8",
@@ -46,7 +45,7 @@ func TestShortenURL(t *testing.T) {
 		},
 		{
 			name: "empty body",
-			path: path,
+			path: cfg.ServerAddress,
 			body: "",
 			want: want{
 				contentType: "",
@@ -56,7 +55,7 @@ func TestShortenURL(t *testing.T) {
 		},
 		{
 			name: "invalid body",
-			path: path,
+			path: cfg.ServerAddress,
 			body: "https:/test.com",
 			want: want{
 				contentType: "",

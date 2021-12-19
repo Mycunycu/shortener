@@ -1,15 +1,18 @@
 package config
 
 import (
-	"log"
+	"os"
 	"sync"
+)
 
-	"github.com/ilyakaznacheev/cleanenv"
+const (
+	ServerAddress = "SERVER_ADDRESS"
+	BaseURL = "BASE_URL"
 )
 
 type Config struct {
-	ServerAddress string `yaml:"SERVER_ADDRESS" env-default:"localhost:3000"`
-	BaseURL       string `yaml:"BASE_URL" env-default:"http://localhost:3000/"`
+	ServerAddress string
+	BaseURL       string 
 }
 
 var cfg Config
@@ -23,8 +26,21 @@ func initialize() {
 	var once sync.Once
 
 	once.Do(func() {
-		if err := cleanenv.ReadConfig("config.yml", &cfg); err != nil {
-			log.Fatalf("read config err: %v", err)
+		cfg = Config{
+			ServerAddress: getEnv(ServerAddress, "localhost:8080"),
+			BaseURL: getEnv(BaseURL, "http://localhost:8080/"),
 		}
+		// if err := cleanenv.ReadConfig("config.yml", &cfg); err != nil {
+		// 	log.Fatalf("read config err: %v", err)
+		// }
 	})
+}
+
+func getEnv(name, def string) string {
+	value, ok := os.LookupEnv(name)
+	if ok {
+		return value
+	}
+
+	return def
 }
