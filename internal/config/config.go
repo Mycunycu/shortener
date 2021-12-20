@@ -34,11 +34,8 @@ func initialize() {
 			log.Fatalf("initialize config error: %v", err)
 		}
 
-		if !helpers.IsValidAddress(cfg.ServerAddress) {
+		if !helpers.IsValidAddress(cfg.ServerAddress) || !helpers.IsValidAddress(cfg.BaseURL) {
 			cfg.ServerAddress = DefaultServerAddress
-		}
-
-		if !helpers.IsValidAddress(cfg.BaseURL) {
 			cfg.BaseURL = DefaultBaseURL
 		}
 	})
