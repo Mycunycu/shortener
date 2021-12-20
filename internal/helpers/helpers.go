@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/golang/gddo/httputil/header"
 )
 
@@ -77,4 +78,8 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 	}
 
 	return nil
+}
+
+func IsValidAddress(addr string) bool {
+	return govalidator.IsPort(strings.Split(addr, ":")[1])
 }

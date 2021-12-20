@@ -4,7 +4,13 @@ import (
 	"log"
 	"sync"
 
+	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/caarlos0/env"
+)
+
+const (
+	DefaultServerAddress = "localhost:8080"
+	DefaultBaseURL       = "http://localhost:8080/"
 )
 
 type Config struct {
@@ -26,6 +32,14 @@ func initialize() {
 		cfg = Config{}
 		if err := env.Parse(&cfg); err != nil {
 			log.Fatalf("initialize config error: %v", err)
+		}
+
+		if !helpers.IsValidAddress(cfg.ServerAddress) {
+			cfg.ServerAddress = DefaultServerAddress
+		}
+
+		if !helpers.IsValidAddress(cfg.BaseURL) {
+			cfg.BaseURL = DefaultBaseURL
 		}
 	})
 }
