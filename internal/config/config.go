@@ -1,20 +1,15 @@
 package config
 
 import (
-	"os"
+	"log"
 	"sync"
 
-	"github.com/asaskevich/govalidator"
-)
-
-const (
-	ServerAddress = "SERVER_ADDRESS"
-	BaseURL       = "BASE_URL"
+	"github.com/caarlos0/env"
 )
 
 type Config struct {
-	ServerAddress string
-	BaseURL       string
+	ServerAddress string `env:"SERVER_ADDRESS" envDefault:"localhost:8080"`
+	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080/"`
 }
 
 var cfg Config
@@ -28,28 +23,9 @@ func initialize() {
 	var once sync.Once
 
 	once.Do(func() {
-		var address = "localhost:8080"
-		if isValid := govalidator.IsPort(os.Getenv(ServerAddress)); isValid {
-			address = os.Getenv(ServerAddress)
-		}
-
-		var baseURL = "http://localhost:8080/"
-		if isValid := govalidator.IsURL(os.Getenv(BaseURL)); isValid {
-			baseURL = os.Getenv(BaseURL)
-		}
-
-		cfg = Config{
-			ServerAddress: address,
-			BaseURL:       baseURL,
+		cfg = Config{}
+		if err := env.Parse(&cfg); err != nil {
+			log.Fatalf("initialize config error: %v", err)
 		}
 	})
 }
-
-// func getEnv(name, def string) string {
-// 	value, ok := os.LookupEnv(name)
-// 	if ok {
-// 		return value
-// 	}
-
-// 	return def
-// }
