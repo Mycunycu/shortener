@@ -46,7 +46,7 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(sOrigURL)
-		resp := "http://" + h.cfg.BaseURL + "/" + id
+		resp := h.cfg.BaseURL + id
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -96,7 +96,7 @@ func (h *Handler) Shorten() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(req.URL)
-		result := "http://" + h.cfg.BaseURL + "/" + id
+		result := h.cfg.BaseURL + id
 		responce := models.ShortenResponce{Result: result}
 
 		jsonResp, err := json.Marshal(responce)
