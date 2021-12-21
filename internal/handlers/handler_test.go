@@ -17,7 +17,7 @@ import (
 
 var cfg = config.Config{
 	ServerAddress: "localhost:8080",
-	BaseURL:       "http://localhost:8080/",
+	BaseURL:       "http://localhost:8080",
 }
 
 func TestShortenURL(t *testing.T) {
