@@ -119,7 +119,7 @@ func TestExpandURL(t *testing.T) {
 		{
 			name: "no have data",
 			path: path,
-			id:   "2",
+			id:   "a",
 			want: want{
 				statusCode:  204,
 				headerValue: "",
@@ -174,7 +174,7 @@ func TestShorten(t *testing.T) {
 			want: want{
 				contentType: "application/json",
 				statusCode:  201,
-				body:        `{"result": "http://localhost:8080/1"}`,
+				body:        `{"result": "http://localhost:8080/2"}`,
 			},
 		},
 		// TODO add test cases

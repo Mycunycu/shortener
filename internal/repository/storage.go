@@ -2,7 +2,6 @@ package repository
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 )
@@ -39,8 +38,6 @@ func (s *Storage) ReadAll() map[string]string {
 	for scanner.Scan() {
 		ln := strings.Split(scanner.Text(), "\n")
 		splited := strings.Split(ln[0], "-")
-
-		fmt.Println(splited)
 
 		result[splited[0]] = splited[1]
 	}
