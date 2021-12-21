@@ -14,8 +14,9 @@ const (
 )
 
 type Config struct {
-	ServerAddress string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL       string `env:"BASE_URL" envDefault:"http://localhost:8080/"`
+	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080/"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.txt"`
 }
 
 var cfg Config
@@ -34,18 +35,18 @@ func initialize() {
 			log.Fatalf("initialize config error: %v", err)
 		}
 
-		flag.Func("a", "server address for shorten", func(flagValue string) error {
-			cfg.ServerAddress = flagValue
+		flag.Func("a", "server address", func(value string) error {
+			cfg.ServerAddress = value
 			return nil
 		})
-		flag.Func("b", "base url for expand", func(flagValue string) error {
-			cfg.BaseURL = flagValue
+		flag.Func("b", "base url", func(value string) error {
+			cfg.BaseURL = value
 			return nil
 		})
-		// flag.Func("f", "path to storage file", func(flagValue string) error {
-		// 	cfg.FileStoragePath = flagValue
-		// 	return nil
-		// })
+		flag.Func("f", "path to storage file", func(value string) error {
+			cfg.FileStoragePath = value
+			return nil
+		})
 
 		flag.Parse()
 

@@ -2,34 +2,31 @@ package repository
 
 import (
 	"errors"
-	"strconv"
 	"sync"
-	"sync/atomic"
+
+	"github.com/Mycunycu/shortener/internal/helpers"
 )
 
 type ShortURL struct {
-	id   int64
 	urls map[string]string
 	mu   *sync.RWMutex
 }
 
 func NewShortURL() *ShortURL {
 	return &ShortURL{
-		id:   0,
 		urls: make(map[string]string),
 		mu:   &sync.RWMutex{},
 	}
 }
 
 func (s *ShortURL) Set(url string) string {
-	atomic.AddInt64(&s.id, 1)
-	idString := strconv.Itoa(int(s.id))
+	id := helpers.CreateNewId(5)
 
 	s.mu.Lock()
-	s.urls[idString] = url
+	s.urls[id] = url
 	s.mu.Unlock()
 
-	return idString
+	return id
 }
 func (s *ShortURL) GetByID(id string) (string, error) {
 	s.mu.RLock()
