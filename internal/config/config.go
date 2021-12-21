@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"log"
 	"sync"
 
@@ -32,6 +33,21 @@ func initialize() {
 		if err := env.Parse(&cfg); err != nil {
 			log.Fatalf("initialize config error: %v", err)
 		}
+
+		flag.Func("a", "server address for shorten", func(flagValue string) error {
+			cfg.ServerAddress = flagValue
+			return nil
+		})
+		flag.Func("b", "base url for expand", func(flagValue string) error {
+			cfg.BaseURL = flagValue
+			return nil
+		})
+		// flag.Func("f", "path to storage file", func(flagValue string) error {
+		// 	cfg.FileStoragePath = flagValue
+		// 	return nil
+		// })
+
+		flag.Parse()
 
 		// if !helpers.IsValidAddress(cfg.ServerAddress) || !helpers.IsValidAddress(cfg.BaseURL) {
 		// 	cfg.ServerAddress = DefaultServerAddress
