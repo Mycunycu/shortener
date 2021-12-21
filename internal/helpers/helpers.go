@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/golang/gddo/httputil/header"
 )
 
@@ -80,18 +77,4 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 	}
 
 	return nil
-}
-
-func IsValidAddress(addr string) bool {
-	return govalidator.IsPort(strings.Split(addr, ":")[1])
-}
-
-func CreateNewId(n int) string {
-	var symb = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-	rand.Seed(time.Now().UnixNano())
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = symb[rand.Intn(len(symb))]
-	}
-	return string(b)
 }

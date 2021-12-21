@@ -49,10 +49,5 @@ func initialize() {
 		})
 
 		flag.Parse()
-
-		// if !helpers.IsValidAddress(cfg.ServerAddress) || !helpers.IsValidAddress(cfg.BaseURL) {
-		// 	cfg.ServerAddress = DefaultServerAddress
-		// 	cfg.BaseURL = DefaultBaseURL
-		// }
 	})
 }
