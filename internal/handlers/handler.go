@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,12 +17,13 @@ import (
 )
 
 type Handler struct {
-	cfg  config.Config
-	repo repository.URLRepository
+	cfg     config.Config
+	repo    repository.IRepository
+	storage repository.IStorage
 }
 
-func NewHandler(cfg config.Config, r repository.URLRepository) *Handler {
-	return &Handler{cfg: cfg, repo: r}
+func NewHandler(cfg config.Config, r repository.IRepository, s repository.IStorage) *Handler {
+	return &Handler{cfg: cfg, repo: r, storage: s}
 }
 
 func (h *Handler) ShortenURL() http.HandlerFunc {
@@ -46,6 +48,8 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(sOrigURL)
+		h.storage.WriteData(fmt.Sprintf("%s-", id))
+		h.storage.WriteData(fmt.Sprintf("%s\n", sOrigURL))
 		resp := h.cfg.BaseURL + "/" + id
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
@@ -96,6 +100,8 @@ func (h *Handler) Shorten() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(req.URL)
+		h.storage.WriteData(fmt.Sprintf("%s-", id))
+		h.storage.WriteData(fmt.Sprintf("%s\n", req.URL))
 		result := h.cfg.BaseURL + "/" + id
 		responce := models.ShortenResponce{Result: result}
 

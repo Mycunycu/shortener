@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/Mycunycu/shortener/internal/config"
+	"github.com/Mycunycu/shortener/internal/handlers"
+	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
 )
@@ -17,8 +19,15 @@ import (
 func Run() error {
 	cfg := config.Get()
 
-	r := routes.NewRouter(cfg)
-	srv := server.NewServer(cfg.ServerAddress, r)
+	storage, err := repository.NewStorage(cfg.FileStoragePath)
+	if err != nil {
+		return fmt.Errorf("error creating new storage: %v", err)
+	}
+
+	repo := repository.NewShortURL(storage)
+	handler := handlers.NewHandler(cfg, repo, storage)
+	router := routes.NewRouter(handler)
+	srv := server.NewServer(cfg.ServerAddress, router)
 
 	go func() {
 		err := srv.Run()

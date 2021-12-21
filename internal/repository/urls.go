@@ -2,22 +2,29 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
 )
 
 type ShortURL struct {
-	id   int64
-	urls map[string]string
-	mu   *sync.RWMutex
+	id      int64
+	urls    map[string]string
+	mu      *sync.RWMutex
+	storage IStorage
 }
 
-func NewShortURL() *ShortURL {
+func NewShortURL(storage IStorage) *ShortURL {
+	storedData := storage.ReadAll()
+
+	fmt.Println(storedData)
+
 	return &ShortURL{
-		id:   0,
-		urls: make(map[string]string),
-		mu:   &sync.RWMutex{},
+		id:      int64(len(storedData)),
+		urls:    storedData,
+		mu:      &sync.RWMutex{},
+		storage: storage,
 	}
 }
 
@@ -31,6 +38,7 @@ func (s *ShortURL) Set(url string) string {
 
 	return idString
 }
+
 func (s *ShortURL) GetByID(id string) (string, error) {
 	s.mu.RLock()
 	url, ok := s.urls[id]
