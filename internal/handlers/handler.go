@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Mycunycu/shortener/internal/config"
 	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/repository"
@@ -17,13 +16,12 @@ import (
 )
 
 type Handler struct {
-	cfg     config.Config
-	repo    repository.IRepository
-	storage repository.IStorage
+	baseURL string
+	repo    repository.Repositorier
 }
 
-func NewHandler(cfg config.Config, r repository.IRepository, s repository.IStorage) *Handler {
-	return &Handler{cfg: cfg, repo: r, storage: s}
+func NewHandler(baseURL string, r repository.Repositorier) *Handler {
+	return &Handler{baseURL: baseURL, repo: r}
 }
 
 func (h *Handler) ShortenURL() http.HandlerFunc {
@@ -48,9 +46,9 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(sOrigURL)
-		h.storage.WriteData(fmt.Sprintf("%s-", id))
-		h.storage.WriteData(fmt.Sprintf("%s\n", sOrigURL))
-		resp := h.cfg.BaseURL + "/" + id
+		h.repo.WriteData(fmt.Sprintf("%s-", id))
+		h.repo.WriteData(fmt.Sprintf("%s\n", sOrigURL))
+		resp := h.baseURL + "/" + id
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")
 		w.WriteHeader(http.StatusCreated)
@@ -86,10 +84,11 @@ func (h *Handler) Shorten() http.HandlerFunc {
 			var br *helpers.BadRequest
 			if errors.As(err, &br) {
 				http.Error(w, br.Msg, br.Status)
-			} else {
-				log.Println(err.Error())
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
+
+			log.Println(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
@@ -100,9 +99,9 @@ func (h *Handler) Shorten() http.HandlerFunc {
 		}
 
 		id := h.repo.Set(req.URL)
-		h.storage.WriteData(fmt.Sprintf("%s-", id))
-		h.storage.WriteData(fmt.Sprintf("%s\n", req.URL))
-		result := h.cfg.BaseURL + "/" + id
+		h.repo.WriteData(fmt.Sprintf("%s-", id))
+		h.repo.WriteData(fmt.Sprintf("%s\n", req.URL))
+		result := h.baseURL + "/" + id
 		responce := models.ShortenResponce{Result: result}
 
 		jsonResp, err := json.Marshal(responce)

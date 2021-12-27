@@ -70,10 +70,9 @@ func TestShortenURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
-			storage, _ := repository.NewStorage(cfg.FileStoragePath)
-			repo := repository.NewShortURL(storage)
+			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
 
-			h := NewHandler(cfg, repo, storage).ShortenURL()
+			h := NewHandler(cfg.BaseURL, repo).ShortenURL()
 
 			h.ServeHTTP(w, request)
 
@@ -137,11 +136,10 @@ func TestExpandURL(t *testing.T) {
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
-			storage, _ := repository.NewStorage(cfg.FileStoragePath)
-			repo := repository.NewShortURL(storage)
+			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
 			repo.Set("https://test.com")
 
-			h := NewHandler(cfg, repo, storage).ExpandURL()
+			h := NewHandler(cfg.BaseURL, repo).ExpandURL()
 			h.ServeHTTP(w, request)
 
 			result := w.Result()
@@ -204,9 +202,8 @@ func TestShorten(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
-			storage, _ := repository.NewStorage(cfg.FileStoragePath)
-			repo := repository.NewShortURL(storage)
-			h := NewHandler(cfg, repo, storage).Shorten()
+			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
+			h := NewHandler(cfg.BaseURL, repo).Shorten()
 			h.ServeHTTP(w, request)
 
 			result := w.Result()

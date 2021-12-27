@@ -17,15 +17,14 @@ import (
 )
 
 func Run() error {
-	cfg := config.Get()
+	cfg := config.New()
 
-	storage, err := repository.NewStorage(cfg.FileStoragePath)
+	repo, err := repository.NewShortURL(cfg.FileStoragePath)
 	if err != nil {
-		return fmt.Errorf("error creating new storage: %v", err)
+		return fmt.Errorf("error creating new NewShortURL: %v", err)
 	}
 
-	repo := repository.NewShortURL(storage)
-	handler := handlers.NewHandler(cfg, repo, storage)
+	handler := handlers.NewHandler(cfg.BaseURL, repo)
 	router := routes.NewRouter(handler)
 	srv := server.NewServer(cfg.ServerAddress, router)
 

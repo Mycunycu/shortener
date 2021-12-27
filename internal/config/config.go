@@ -16,7 +16,7 @@ type Config struct {
 
 var cfg Config
 
-func Get() Config {
+func New() Config {
 	initialize()
 	return cfg
 }
