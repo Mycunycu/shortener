@@ -17,6 +17,7 @@ func NewRouter(h *handlers.Handler) *Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.Compress(5, "gzip"))
 
 	r.Post("/", h.ShortenURL())
 	r.Get("/{id}", h.ExpandURL())
