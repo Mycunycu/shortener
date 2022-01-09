@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/Mycunycu/shortener/internal/handlers"
+	md "github.com/Mycunycu/shortener/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -17,7 +18,8 @@ func NewRouter(h *handlers.Handler) *Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Compress(5, "gzip"))
+	//r.Use(middleware.Compress(5, "gzip"))
+	r.Use(md.CompressHandle)
 
 	r.Post("/", h.ShortenURL())
 	r.Get("/{id}", h.ExpandURL())
