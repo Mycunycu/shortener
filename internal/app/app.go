@@ -9,14 +9,24 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Mycunycu/shortener/internal/config"
+	"github.com/Mycunycu/shortener/internal/handlers"
+	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
 )
 
 func Run() error {
-	port := ":8080"
-	r := routes.NewRouter()
-	srv := server.NewServer(port, r)
+	cfg := config.New()
+
+	repo, err := repository.NewShortURL(cfg.FileStoragePath)
+	if err != nil {
+		return fmt.Errorf("error creating new NewShortURL: %v", err)
+	}
+
+	handler := handlers.NewHandler(cfg.BaseURL, repo)
+	router := routes.NewRouter(handler)
+	srv := server.NewServer(cfg.ServerAddress, router)
 
 	go func() {
 		err := srv.Run()

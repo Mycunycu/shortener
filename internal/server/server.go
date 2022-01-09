@@ -8,9 +8,9 @@ type Server struct {
 	*http.Server
 }
 
-func NewServer(port string, handler http.Handler) *Server {
+func NewServer(addr string, handler http.Handler) *Server {
 	return &Server{
-		&http.Server{Addr: port, Handler: handler},
+		&http.Server{Addr: addr, Handler: handler},
 	}
 }
 
