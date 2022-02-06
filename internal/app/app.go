@@ -1,13 +1,9 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/Mycunycu/shortener/internal/config"
 	"github.com/Mycunycu/shortener/internal/handlers"
@@ -41,20 +37,20 @@ func Run() error {
 	}()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	//signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	<-done
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		cancel()
-	}()
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer func() {
+	// 	cancel()
+	// }()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("server shutdown failed:%+v", err)
-	}
+	// if err := srv.Shutdown(ctx); err != nil {
+	// 	log.Fatalf("server shutdown failed:%+v", err)
+	// }
 
-	fmt.Println("Gracefull stopped")
+	// fmt.Println("Gracefull stopped")
 
 	return nil
 }
