@@ -19,7 +19,12 @@ import (
 func Run() error {
 	cfg := config.New()
 
-	repo, err := repository.NewShortURL(cfg.FileStoragePath)
+	conn, err := repository.ConnectDB(cfg.DatabaseDSN)
+	if err != nil {
+		return fmt.Errorf("error db connection: %v", err)
+	}
+
+	repo, err := repository.NewShortURL(conn, cfg.FileStoragePath)
 	if err != nil {
 		return fmt.Errorf("error creating new NewShortURL: %v", err)
 	}

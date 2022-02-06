@@ -2,28 +2,34 @@ package repository
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/jackc/pgx/v4"
 )
+
+var _ Repositorier = (*ShortURL)(nil)
 
 type ShortURL struct {
 	id      int64
 	urls    map[string]string
 	mu      *sync.RWMutex
 	storage *os.File
+	db      *pgx.Conn
 }
 
-func NewShortURL(path string) (*ShortURL, error) {
+func NewShortURL(db *pgx.Conn, path string) (*ShortURL, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, err
 	}
 
-	shortURL := &ShortURL{storage: file, mu: &sync.RWMutex{}}
+	shortURL := &ShortURL{storage: file, mu: &sync.RWMutex{}, db: db}
 	storedData := shortURL.ReadAllData()
 	shortURL.id = int64(len(storedData))
 	shortURL.urls = storedData
@@ -72,4 +78,8 @@ func (s *ShortURL) ReadAllData() map[string]string {
 	}
 
 	return result
+}
+
+func (s *ShortURL) PingDB() error {
+	return s.db.Ping(context.Background())
 }

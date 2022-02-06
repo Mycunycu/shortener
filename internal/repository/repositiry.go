@@ -5,4 +5,5 @@ type Repositorier interface {
 	GetByID(id string) (string, error)
 	WriteData(data string) error
 	ReadAllData() map[string]string
+	PingDB() error
 }

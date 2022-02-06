@@ -18,7 +18,8 @@ import (
 var cfg = config.Config{
 	ServerAddress:   "localhost:8080",
 	BaseURL:         "http://localhost:8080",
-	FileStoragePath: "./storage.txt",
+	FileStoragePath: "internal/repository/storage.txt",
+	DatabaseDSN:     "postgres://user:123@localhost:5432/practicum",
 }
 
 func TestShortenURL(t *testing.T) {
@@ -70,7 +71,8 @@ func TestShortenURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
-			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
+			conn, _ := repository.ConnectDB(cfg.DatabaseDSN)
+			repo, _ := repository.NewShortURL(conn, cfg.FileStoragePath)
 
 			h := NewHandler(cfg.BaseURL, repo).ShortenURL()
 
@@ -136,7 +138,8 @@ func TestExpandURL(t *testing.T) {
 			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
 
 			w := httptest.NewRecorder()
-			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
+			conn, _ := repository.ConnectDB(cfg.DatabaseDSN)
+			repo, _ := repository.NewShortURL(conn, cfg.FileStoragePath)
 			repo.Set("https://test.com")
 
 			h := NewHandler(cfg.BaseURL, repo).ExpandURL()
@@ -202,7 +205,8 @@ func TestShorten(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
-			repo, _ := repository.NewShortURL(cfg.FileStoragePath)
+			conn, _ := repository.ConnectDB(cfg.DatabaseDSN)
+			repo, _ := repository.NewShortURL(conn, cfg.FileStoragePath)
 			h := NewHandler(cfg.BaseURL, repo).Shorten()
 			h.ServeHTTP(w, request)
 
