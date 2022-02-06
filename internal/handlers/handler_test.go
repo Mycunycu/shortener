@@ -18,7 +18,7 @@ import (
 var cfg = config.Config{
 	ServerAddress:   "localhost:8080",
 	BaseURL:         "http://localhost:8080",
-	FileStoragePath: "internal/repository/storage.txt",
+	FileStoragePath: "./storage.txt",
 	DatabaseDSN:     "postgres://user:123@localhost:5432/practicum",
 }
 
