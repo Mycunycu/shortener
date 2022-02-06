@@ -10,7 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 var _ Repositorier = (*ShortURL)(nil)
@@ -20,10 +20,10 @@ type ShortURL struct {
 	urls    map[string]string
 	mu      *sync.RWMutex
 	storage *os.File
-	db      *pgx.Conn
+	db      *pgxpool.Pool
 }
 
-func NewShortURL(db *pgx.Conn, path string) (*ShortURL, error) {
+func NewShortURL(db *pgxpool.Pool, path string) (*ShortURL, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, err
