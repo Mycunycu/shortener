@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +16,12 @@ import (
 	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+const (
+	secretKey  = "secret"
+	cookieName = "userID"
 )
 
 type Handler struct {
@@ -45,6 +54,11 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 			return
 		}
 
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
 		id := h.repo.Set(sOrigURL)
 		h.repo.WriteData(fmt.Sprintf("%s-", id))
 		h.repo.WriteData(fmt.Sprintf("%s\n", sOrigURL))
@@ -62,6 +76,11 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 		if id == "" {
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 			return
+		}
+
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
 		}
 
 		resp, err := h.repo.GetByID(id)
@@ -98,6 +117,11 @@ func (h *Handler) Shorten() http.HandlerFunc {
 			return
 		}
 
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
 		id := h.repo.Set(req.URL)
 		h.repo.WriteData(fmt.Sprintf("%s-", id))
 		h.repo.WriteData(fmt.Sprintf("%s\n", req.URL))
@@ -116,6 +140,17 @@ func (h *Handler) Shorten() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) UserUrlsById() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (h *Handler) PingDB() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h.repo.PingDB()
@@ -126,4 +161,64 @@ func (h *Handler) PingDB() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func (h *Handler) setCookie(w http.ResponseWriter, name, value string) {
+	encryptedValue := h.encryptCookieValue(value, secretKey)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  name,
+		Value: encryptedValue,
+	})
+}
+
+func (h *Handler) encryptCookieValue(value, key string) string {
+	byteValue := []byte(value)
+	byteKey := []byte(key)
+
+	mac := hmac.New(sha256.New, byteKey)
+	mac.Write(byteValue)
+	sig := mac.Sum(nil)
+	result := append(byteValue, sig...)
+
+	return hex.EncodeToString(result)
+}
+
+func (h *Handler) getUserID(r *http.Request) (string, bool) {
+	userID, err := h.getUserIDByCookie(r, cookieName, secretKey)
+	if err != nil {
+		newID, _ := uuid.NewUUID()
+		return newID.String(), true
+	}
+
+	return userID, false
+}
+
+func (h *Handler) getUserIDByCookie(r *http.Request, cookieName, key string) (string, error) {
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		return "", err
+	}
+
+	byteValue, err := hex.DecodeString(cookie.Value)
+	if err != nil {
+		return "", err
+	}
+
+	byteKey := []byte(key)
+	randID, _ := uuid.NewUUID()
+	lenID := len([]byte(randID.String()))
+
+	gotUserID := byteValue[:lenID]
+	gotSign := byteValue[lenID:]
+
+	mac := hmac.New(sha256.New, byteKey)
+	mac.Write(gotUserID)
+	sig := mac.Sum(nil)
+
+	if hmac.Equal(sig, gotSign) {
+		return string(gotUserID), nil
+	}
+
+	return "", errors.New("invalid signature")
 }
