@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,17 +12,25 @@ import (
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
 	"github.com/Mycunycu/shortener/internal/services"
+	"github.com/golang-migrate/migrate/v4"
 )
 
 func Run() error {
 	cfg := config.New()
 
-	db, err := repository.ConnectDB(cfg.DatabaseDSN)
+	db, err := repository.NewDatabase(cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
 	}
 
-	shortURL, err := services.NewShortURL(db, cfg.BaseURL)
+	err = db.Migrate(cfg.MigrationPath)
+	if err != nil {
+		if !errors.Is(err, migrate.ErrNoChange) {
+			return err
+		}
+	}
+
+	shortURL, err := services.NewShortURL(cfg.BaseURL, db)
 	if err != nil {
 		return fmt.Errorf("error creating new NewShortURL: %v", err)
 	}

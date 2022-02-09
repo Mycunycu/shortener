@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -29,38 +30,36 @@ func NewHandler(shortURL services.ShortURLService) *Handler {
 
 func (h *Handler) ShortenURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// bOrigURL, err := io.ReadAll(r.Body)
-		// defer r.Body.Close()
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
+		body, err := io.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-		// if len(bOrigURL) == 0 {
-		// 	w.WriteHeader(http.StatusBadRequest)
-		// 	return
-		// }
+		if len(body) == 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-		// sOrigURL := string(bOrigURL)
-		// validURL := govalidator.IsURL(sOrigURL)
-		// if !validURL {
-		// 	w.WriteHeader(http.StatusBadRequest)
-		// 	return
-		// }
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
 
-		// userID, isNewID := h.getUserID(r)
-		// if isNewID {
-		// 	h.setCookie(w, cookieName, userID)
-		// }
+		originalURL := string(body)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		defer cancel()
 
-		// id := h.repo.Set(sOrigURL)
-		// h.repo.WriteData(fmt.Sprintf("%s-", id))
-		// h.repo.WriteData(fmt.Sprintf("%s\n", sOrigURL))
-		// resp := h.baseURL + "/" + id
+		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-		// w.Header().Set("content-type", "text/html; charset=UTF-8")
-		// w.WriteHeader(http.StatusCreated)
-		// w.Write([]byte(resp))
+		w.Header().Set("content-type", "text/html; charset=UTF-8")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(shortURL))
 	}
 }
 
@@ -90,7 +89,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 
 func (h *Handler) Shorten() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// var req models.ShortenRequest
+		//var req models.ShortenRequest
 
 		// err := helpers.DecodeJSONBody(w, r, &req)
 		// if err != nil {

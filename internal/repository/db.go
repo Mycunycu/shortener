@@ -2,11 +2,31 @@ package repository
 
 import (
 	"context"
+	"errors"
 
+	"github.com/Mycunycu/shortener/internal/models"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func ConnectDB(connStr string) (*pgxpool.Pool, error) {
+var _ Repositorier = (*Database)(nil)
+
+type Database struct {
+	*pgxpool.Pool
+}
+
+func NewDatabase(connStr string) (*Database, error) {
+	pool, err := connectDB(connStr)
+	if err != nil {
+		return nil, errors.New("db connection error")
+	}
+
+	return &Database{pool}, nil
+}
+
+func connectDB(connStr string) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.Connect(context.Background(), connStr)
 	if err != nil {
 		return nil, err
@@ -18,4 +38,28 @@ func ConnectDB(connStr string) (*pgxpool.Pool, error) {
 	}
 
 	return pool, nil
+}
+
+func (d *Database) Migrate(source string) error {
+	m, err := migrate.New(source, d.Config().ConnString())
+	if err != nil {
+		return err
+	}
+	if err := m.Up(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Database) PingDB(ctx context.Context) error {
+	return d.Ping(ctx)
+}
+
+func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
+	_, err := d.Exec(ctx, sql, e.UserID, e.ShortURL, e.OriginalURL)
+	if err != nil {
+		return err
+	}
+	return nil
 }
