@@ -10,22 +10,23 @@ import (
 	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
+	"github.com/Mycunycu/shortener/internal/services"
 )
 
 func Run() error {
 	cfg := config.New()
 
-	conn, err := repository.ConnectDB(cfg.DatabaseDSN)
+	db, err := repository.ConnectDB(cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
 	}
 
-	repo, err := repository.NewShortURL(conn, cfg.FileStoragePath)
+	shortURL, err := services.NewShortURL(db, cfg.BaseURL)
 	if err != nil {
 		return fmt.Errorf("error creating new NewShortURL: %v", err)
 	}
 
-	handler := handlers.NewHandler(cfg.BaseURL, repo)
+	handler := handlers.NewHandler(shortURL)
 	router := routes.NewRouter(handler)
 	srv := server.NewServer(cfg.ServerAddress, router)
 
