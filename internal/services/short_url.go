@@ -42,12 +42,12 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 		return "", errors.New("invalid original URL")
 	}
 
-	id := uuid.NewString()
-	shortURL := s.baseURL + "/" + id
+	shortID := uuid.NewString()
+	shortURL := s.baseURL + "/" + shortID
 
 	ety := models.ShortenEty{
 		UserID:      userID,
-		ShortURL:    shortURL,
+		ShortID:     shortID,
 		OriginalURL: originalURL,
 	}
 
@@ -61,6 +61,11 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 	// h.repo.WriteData(fmt.Sprintf("%s\n", sOrigURL))
 
 	return shortURL, nil
+}
+
+func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
+	ety, err := s.db.GetByShortID(ctx, id)
+	return ety.OriginalURL, err
 }
 
 // func (s *ShortURL) Set(url string) string {

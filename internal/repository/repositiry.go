@@ -12,5 +12,6 @@ type Repositorier interface {
 	// WriteData(data string) error
 	// ReadAllData() map[string]string
 	Save(context.Context, models.ShortenEty) error
+	GetByShortID(context.Context, string) (*models.ShortenEty, error)
 	PingDB(context.Context) error
 }

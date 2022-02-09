@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Mycunycu/shortener/internal/services"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -65,25 +66,28 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 
 func (h *Handler) ExpandURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// id := chi.URLParam(r, "id")
-		// if id == "" {
-		// 	http.Error(w, "Bad Request", http.StatusBadRequest)
-		// 	return
-		// }
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
 
-		// userID, isNewID := h.getUserID(r)
-		// if isNewID {
-		// 	h.setCookie(w, cookieName, userID)
-		// }
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
 
-		// resp, err := h.repo.GetByID(id)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusNoContent)
-		// 	return
-		// }
+		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		defer cancel()
 
-		// w.Header().Set("Location", resp)
-		// w.WriteHeader(http.StatusTemporaryRedirect)
+		originalURL, err := h.shortURL.ExpandURL(ctx, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNoContent)
+			return
+		}
+
+		w.Header().Set("Location", originalURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 	}
 }
 

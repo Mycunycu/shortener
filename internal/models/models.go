@@ -10,7 +10,7 @@ type ShortenResponce struct {
 
 type ShortenEty struct {
 	UserID      string `json:"user_id"`
-	ShortURL    string `json:"short_url"`
+	ShortID     string `json:"short_id"`
 	OriginalURL string `json:"original_url"`
 }
 
