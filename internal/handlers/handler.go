@@ -26,11 +26,11 @@ const (
 
 type Handler struct {
 	shortURL services.ShortURLService
-	timeout  int64
+	timeout  time.Duration
 }
 
-func NewHandler(shortURL services.ShortURLService, timeout int64) *Handler {
-	return &Handler{shortURL: shortURL}
+func NewHandler(shortURL services.ShortURLService, timeout time.Duration) *Handler {
+	return &Handler{shortURL: shortURL, timeout: timeout}
 }
 
 func (h *Handler) ShortenURL() http.HandlerFunc {
@@ -53,7 +53,7 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		originalURL := string(body)
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
@@ -81,7 +81,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
@@ -117,7 +117,7 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
@@ -148,7 +148,7 @@ func (h *Handler) HistoryByUserID() http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
 		result, err := h.shortURL.GetHistoryByUserID(ctx, userID)
@@ -176,7 +176,7 @@ func (h *Handler) HistoryByUserID() http.HandlerFunc {
 
 func (h *Handler) PingDB() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
 		err := h.shortURL.PingDB(ctx)

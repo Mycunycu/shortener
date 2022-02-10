@@ -40,7 +40,7 @@ func Run() error {
 		return fmt.Errorf("error creating new NewShortURL: %v", err)
 	}
 
-	handler := handlers.NewHandler(shortURL, cfg.CtxTimeout)
+	handler := handlers.NewHandler(shortURL, time.Duration(cfg.CtxTimeout)*time.Second)
 	router := routes.NewRouter(handler)
 	srv := server.NewServer(cfg.ServerAddress, router)
 
@@ -56,7 +56,7 @@ func Run() error {
 
 	<-done
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout)*time.Second)
 	defer func() {
 		cancel()
 	}()
