@@ -5,11 +5,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/Mycunycu/shortener/internal/helpers"
+	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -22,7 +26,6 @@ const (
 
 type Handler struct {
 	shortURL services.ShortURLService
-	//repo    repository.Repositorier
 }
 
 func NewHandler(shortURL services.ShortURLService) *Handler {
@@ -91,49 +94,47 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) Shorten() http.HandlerFunc {
+func (h *Handler) ApiShortenURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		//var req models.ShortenRequest
+		var req models.ShortenRequest
 
-		// err := helpers.DecodeJSONBody(w, r, &req)
-		// if err != nil {
-		// 	var br *helpers.BadRequest
-		// 	if errors.As(err, &br) {
-		// 		http.Error(w, br.Msg, br.Status)
-		// 		return
-		// 	}
+		err := helpers.DecodeJSONBody(w, r, &req)
+		if err != nil {
+			var br *helpers.BadRequest
+			if errors.As(err, &br) {
+				http.Error(w, br.Msg, br.Status)
+				return
+			}
 
-		// 	log.Println(err.Error())
-		// 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		// 	return
-		// }
+			log.Println(err.Error())
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 
-		// validURL := govalidator.IsURL(req.URL)
-		// if !validURL {
-		// 	http.Error(w, "Invalid URL field", http.StatusBadRequest)
-		// 	return
-		// }
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
 
-		// userID, isNewID := h.getUserID(r)
-		// if isNewID {
-		// 	h.setCookie(w, cookieName, userID)
-		// }
+		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		defer cancel()
 
-		// id := h.repo.Set(req.URL)
-		// h.repo.WriteData(fmt.Sprintf("%s-", id))
-		// h.repo.WriteData(fmt.Sprintf("%s\n", req.URL))
-		// result := h.baseURL + "/" + id
-		// responce := models.ShortenResponce{Result: result}
+		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-		// jsonResp, err := json.Marshal(responce)
-		// if err != nil {
-		// 	w.WriteHeader(http.StatusInternalServerError)
-		// 	return
-		// }
+		responce := models.ShortenResponce{Result: shortURL}
+		jsonResp, err := json.Marshal(responce)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-		// w.Header().Set("content-type", "application/json")
-		// w.WriteHeader(http.StatusCreated)
-		// w.Write(jsonResp)
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(jsonResp)
 	}
 }
 
