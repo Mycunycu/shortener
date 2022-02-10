@@ -26,9 +26,10 @@ const (
 
 type Handler struct {
 	shortURL services.ShortURLService
+	timeout  int64
 }
 
-func NewHandler(shortURL services.ShortURLService) *Handler {
+func NewHandler(shortURL services.ShortURLService, timeout int64) *Handler {
 	return &Handler{shortURL: shortURL}
 }
 
@@ -52,7 +53,7 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		originalURL := string(body)
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
@@ -80,7 +81,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
 		defer cancel()
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
@@ -116,7 +117,7 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
@@ -147,7 +148,7 @@ func (h *Handler) HistoryByUserID() http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
 		defer cancel()
 
 		result, err := h.shortURL.GetHistoryByUserID(ctx, userID)
@@ -175,7 +176,7 @@ func (h *Handler) HistoryByUserID() http.HandlerFunc {
 
 func (h *Handler) PingDB() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(h.timeout))
 		defer cancel()
 
 		err := h.shortURL.PingDB(ctx)
