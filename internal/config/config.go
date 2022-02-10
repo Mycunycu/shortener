@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
+	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8000"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8000"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"internal/repository/storage.txt"`
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"postgres://user:123@localhost:5432/practicum?sslmode=disable"`
 	MigrationPath   string `env:"MIGRATION_PATH" envDefault:"file://internal/repository/migrations"`

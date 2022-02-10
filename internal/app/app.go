@@ -26,7 +26,6 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
 	}
-
 	defer db.Close()
 
 	err = db.Migrate(cfg.MigrationPath)
