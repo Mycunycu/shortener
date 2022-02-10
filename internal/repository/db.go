@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -64,7 +65,7 @@ func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
 	return nil
 }
 
-func (d *Database) GetByShortID(ctx context.Context, id string) (*models.ShortenEty, error) {
+func (d *Database) GetByShortID(ctx context.Context, id string) (models.ShortenEty, error) {
 	sql := "SELECT * FROM shortened WHERE short_id = $1"
 	row := d.QueryRow(ctx, sql, id)
 
@@ -72,5 +73,29 @@ func (d *Database) GetByShortID(ctx context.Context, id string) (*models.Shorten
 	var etyID int
 	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
 
-	return &ety, err
+	return ety, err
+}
+
+func (d *Database) GetByUserID(ctx context.Context, id string) ([]models.ShortenEty, error) {
+	sql := "SELECT * FROM shortened WHERE user_id = $1"
+	rows, err := d.Query(ctx, sql, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var ety models.ShortenEty
+	var etyID int
+	history := make([]models.ShortenEty, 0)
+
+	for rows.Next() {
+		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+		fmt.Println(ety)
+		if err != nil {
+			return nil, err
+		}
+
+		history = append(history, ety)
+	}
+
+	return history, err
 }

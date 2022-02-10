@@ -52,7 +52,7 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		originalURL := string(body)
-		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
@@ -80,7 +80,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
 		defer cancel()
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
@@ -116,7 +116,7 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
 		defer cancel()
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
@@ -138,20 +138,44 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) UserUrlsById() http.HandlerFunc {
+func (h *Handler) HistoryByUserID() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, isNewID := h.getUserID(r)
 		if isNewID {
 			h.setCookie(w, cookieName, userID)
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
+		defer cancel()
+
+		result, err := h.shortURL.GetHistoryByUserID(ctx, userID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if len(result) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		jsonResult, err := json.Marshal(result)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResult)
 	}
 }
 
 func (h *Handler) PingDB() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(time.Second*5))
 		defer cancel()
 
 		err := h.shortURL.PingDB(ctx)

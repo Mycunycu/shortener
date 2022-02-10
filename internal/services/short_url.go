@@ -14,24 +14,10 @@ var _ ShortURLService = (*ShortURL)(nil)
 
 type ShortURL struct {
 	baseURL string
-	//id   int64
-	//urls map[string]string
-	//mu      *sync.RWMutex
-	//storage *os.File
-	db *repository.Database
+	db      *repository.Database
 }
 
 func NewShortURL(baseURL string, db *repository.Database) (*ShortURL, error) {
-	// file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0777)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	//shortURL := &ShortURL{storage: file, mu: &sync.RWMutex{}, db: db}
-	// storedData := shortURL.ReadAllData()
-	// shortURL.id = int64(len(storedData))
-	// shortURL.urls = storedData
-
 	shortURL := &ShortURL{baseURL: baseURL, db: db}
 	return shortURL, nil
 }
@@ -56,16 +42,29 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 		return "", err
 	}
 
-	// id := h.repo.Set(sOrigURL)
-	// h.repo.WriteData(fmt.Sprintf("%s-", id))
-	// h.repo.WriteData(fmt.Sprintf("%s\n", sOrigURL))
-
 	return shortURL, nil
 }
 
 func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
 	ety, err := s.db.GetByShortID(ctx, id)
 	return ety.OriginalURL, err
+}
+
+func (s *ShortURL) GetHistoryByUserID(ctx context.Context, id string) ([]models.UserHistoryItem, error) {
+	history, err := s.db.GetByUserID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]models.UserHistoryItem, len(history))
+	for i, item := range history {
+		result[i] = models.UserHistoryItem{
+			ShortURL:    s.baseURL + "/" + item.ShortID,
+			OriginalURL: item.OriginalURL,
+		}
+	}
+
+	return result, nil
 }
 
 // func (s *ShortURL) Set(url string) string {
