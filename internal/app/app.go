@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,7 +15,6 @@ import (
 	"github.com/Mycunycu/shortener/internal/routes"
 	"github.com/Mycunycu/shortener/internal/server"
 	"github.com/Mycunycu/shortener/internal/services"
-	"github.com/golang-migrate/migrate/v4"
 )
 
 func Run() error {
@@ -25,18 +23,18 @@ func Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	db, err := repository.NewDatabase(ctx, cfg.DatabaseDSN)
-	if err != nil {
-		return fmt.Errorf("error db connection: %v", err)
-	}
-	defer db.Close()
+	db, _ := repository.NewDatabase(ctx, cfg.DatabaseDSN)
+	// if err != nil {
+	// 	return fmt.Errorf("error db connection: %v", err)
+	// }
+	//defer db.Close()
 
-	err = db.Migrate(cfg.MigrationPath)
-	if err != nil {
-		if !errors.Is(err, migrate.ErrNoChange) {
-			return err
-		}
-	}
+	// err := db.Migrate(cfg.MigrationPath)
+	// if err != nil {
+	// 	if !errors.Is(err, migrate.ErrNoChange) {
+	// 		return err
+	// 	}
+	// }
 
 	storage, err := repository.NewStorage(cfg.FileStoragePath)
 	if err != nil {
