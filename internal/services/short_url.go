@@ -114,5 +114,6 @@ func (s *ShortURL) GetHistoryByUserID(id string) ([]models.UserHistoryItem, erro
 // }
 
 func (s *ShortURL) PingDB(ctx context.Context) error {
-	return s.db.PingDB(context.Background())
+	return nil
+	//return s.db.PingDB(context.Background())
 }
