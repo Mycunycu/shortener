@@ -18,8 +18,8 @@ type Database struct {
 	*pgxpool.Pool
 }
 
-func NewDatabase(connStr string) (*Database, error) {
-	pool, err := connectDB(connStr)
+func NewDatabase(ctx context.Context, connStr string) (*Database, error) {
+	pool, err := connectDB(ctx, connStr)
 	if err != nil {
 		return nil, errors.New("db connection error")
 	}
@@ -27,13 +27,13 @@ func NewDatabase(connStr string) (*Database, error) {
 	return &Database{pool}, nil
 }
 
-func connectDB(connStr string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.Connect(context.Background(), connStr)
+func connectDB(ctx context.Context, connStr string) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.Connect(ctx, connStr)
 	if err != nil {
 		return nil, err
 	}
 
-	err = pool.Ping(context.Background())
+	err = pool.Ping(ctx)
 	if err != nil {
 		return nil, err
 	}

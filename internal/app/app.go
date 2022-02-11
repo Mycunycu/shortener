@@ -22,7 +22,9 @@ import (
 func Run() error {
 	cfg := config.New()
 
-	db, err := repository.NewDatabase(cfg.DatabaseDSN)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	db, err := repository.NewDatabase(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
 	}
@@ -58,12 +60,12 @@ func Run() error {
 
 	<-done
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout)*time.Second)
+	timeoutCtx, timeoutCtxCancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout)*time.Second)
 	defer func() {
-		cancel()
+		timeoutCtxCancel()
 	}()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(timeoutCtx); err != nil {
 		log.Fatalf("server shutdown failed:%+v", err)
 	}
 
