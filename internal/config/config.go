@@ -35,10 +35,10 @@ func initialize() {
 			log.Fatalf("initialize config error: %v", err)
 		}
 
-		flag.Func("a", "server address", func(value string) error {
-			cfg.ServerAddress = value
-			return nil
-		})
+		// flag.Func("a", "server address", func(value string) error {
+		// 	cfg.ServerAddress = value
+		// 	return nil
+		// })
 		flag.Func("b", "base url", func(value string) error {
 			cfg.BaseURL = value
 			return nil
