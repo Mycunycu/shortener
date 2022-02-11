@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -18,7 +17,10 @@ type Database struct {
 	*pgxpool.Pool
 }
 
-func NewDatabase(ctx context.Context, connStr string) (*Database, error) {
+func NewDatabase(connStr string) (*Database, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	pool, err := connectDB(ctx, connStr)
 	if err != nil {
 		return nil, errors.New("db connection error")
@@ -89,7 +91,6 @@ func (d *Database) GetByUserID(ctx context.Context, id string) ([]models.Shorten
 
 	for rows.Next() {
 		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
-		fmt.Println(ety)
 		if err != nil {
 			return nil, err
 		}
