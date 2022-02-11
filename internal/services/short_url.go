@@ -15,11 +15,11 @@ var _ ShortURLService = (*ShortURL)(nil)
 type ShortURL struct {
 	baseURL string
 	db      repository.Repositorier
-	storage repository.Storager
+	//storage repository.Storager
 }
 
-func NewShortURL(baseURL string, db repository.Repositorier, stor repository.Storager) *ShortURL {
-	return &ShortURL{baseURL: baseURL, db: db, storage: stor}
+func NewShortURL(baseURL string, db repository.Repositorier) *ShortURL {
+	return &ShortURL{baseURL: baseURL, db: db}
 }
 
 func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (string, error) {
