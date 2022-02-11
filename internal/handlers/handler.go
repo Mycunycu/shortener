@@ -180,6 +180,11 @@ func (h *Handler) PingDB() http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
 		err := h.shortURL.PingDB(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
