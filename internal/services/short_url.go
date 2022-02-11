@@ -48,10 +48,10 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
 	ety, err := s.db.GetByShortID(ctx, id)
 	if err != nil {
-		return ety.OriginalURL, nil
+		return "", err
 	}
 
-	return "", err
+	return ety.OriginalURL, err
 }
 
 func (s *ShortURL) GetHistoryByUserID(ctx context.Context, id string) ([]models.UserHistoryItem, error) {

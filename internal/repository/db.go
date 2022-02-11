@@ -74,7 +74,6 @@ func (d *Database) GetByShortID(ctx context.Context, id string) (models.ShortenE
 	var ety models.ShortenEty
 	var etyID int
 	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
-
 	return ety, err
 }
 
