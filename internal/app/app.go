@@ -23,7 +23,10 @@ import (
 func Run() error {
 	cfg := config.New()
 
-	db, err := repository.NewDatabase(cfg.DatabaseDSN)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	db, err := repository.NewDatabase(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
 	}
@@ -46,7 +49,7 @@ func Run() error {
 
 	handler := handlers.NewHandler(shortURL, time.Duration(cfg.CtxTimeout)*time.Second)
 	router := routes.NewRouter(handler)
-	srv := server.NewServer(cfg.ServerAddress, router)
+	srv := server.NewServer(ctx, cfg.ServerAddress, router)
 
 	go func() {
 		err := srv.ListenAndServe()

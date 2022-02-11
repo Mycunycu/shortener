@@ -17,9 +17,7 @@ type Database struct {
 	*pgxpool.Pool
 }
 
-func NewDatabase(connStr string) (*Database, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func NewDatabase(ctx context.Context, connStr string) (*Database, error) {
 
 	pool, err := connectDB(ctx, connStr)
 	if err != nil {

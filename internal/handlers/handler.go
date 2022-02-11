@@ -190,6 +190,21 @@ func (h *Handler) PingDB() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) ShortenBatchURL() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
+		defer cancel()
+
+		err := h.shortURL.PingDB(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (h *Handler) setCookie(w http.ResponseWriter, name, value string) {
 	encryptedValue := h.encryptCookieValue(value, secretKey)
 
