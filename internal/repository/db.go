@@ -33,10 +33,10 @@ func connectDB(ctx context.Context, connStr string) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 
-	// err = pool.Ping(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	err = pool.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	return pool, nil
 }

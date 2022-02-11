@@ -24,6 +24,7 @@ func Run() error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	db, err := repository.NewDatabase(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		return fmt.Errorf("error db connection: %v", err)
@@ -56,14 +57,13 @@ func Run() error {
 	}()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(done, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT)
 
 	<-done
+	cancel()
 
 	timeoutCtx, timeoutCtxCancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout)*time.Second)
-	defer func() {
-		timeoutCtxCancel()
-	}()
+	defer timeoutCtxCancel()
 
 	if err := srv.Shutdown(timeoutCtx); err != nil {
 		log.Fatalf("server shutdown failed:%+v", err)
