@@ -12,3 +12,11 @@ type Repositorier interface {
 	GetByUserID(context.Context, string) ([]models.ShortenEty, error)
 	PingDB(context.Context) error
 }
+
+type Storager interface {
+	SaveInMemory(string, string, string)
+	WriteToFile(string, string, string)
+	GetByShortID(string) (string, error)
+	ReadAllFromFile()
+	GetAllByUserID(string) []models.ShortenItem
+}

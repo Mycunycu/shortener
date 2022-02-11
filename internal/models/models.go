@@ -14,6 +14,11 @@ type ShortenEty struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type ShortenItem struct {
+	ShortID     string `json:"short_id"`
+	OriginalURL string `json:"original_url"`
+}
+
 type UserHistoryItem struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`

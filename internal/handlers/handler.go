@@ -53,10 +53,8 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 		}
 
 		originalURL := string(body)
-		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
-		defer cancel()
 
-		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
+		shortURL, err := h.shortURL.ShortenURL(userID, originalURL)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -81,10 +79,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
-		defer cancel()
-
-		originalURL, err := h.shortURL.ExpandURL(ctx, id)
+		originalURL, err := h.shortURL.ExpandURL(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNoContent)
 			return
@@ -117,10 +112,7 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 			h.setCookie(w, cookieName, userID)
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
-		defer cancel()
-
-		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
+		shortURL, err := h.shortURL.ShortenURL(userID, req.URL)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -148,10 +140,7 @@ func (h *Handler) HistoryByUserID() http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
-		defer cancel()
-
-		result, err := h.shortURL.GetHistoryByUserID(ctx, userID)
+		result, err := h.shortURL.GetHistoryByUserID(userID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

@@ -14,15 +14,15 @@ var _ ShortURLService = (*ShortURL)(nil)
 
 type ShortURL struct {
 	baseURL string
-	db      *repository.Database
+	db      repository.Repositorier
+	storage repository.Storager
 }
 
-func NewShortURL(baseURL string, db *repository.Database) (*ShortURL, error) {
-	shortURL := &ShortURL{baseURL: baseURL, db: db}
-	return shortURL, nil
+func NewShortURL(baseURL string, db repository.Repositorier, stor repository.Storager) *ShortURL {
+	return &ShortURL{baseURL: baseURL, db: db, storage: stor}
 }
 
-func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (string, error) {
+func (s *ShortURL) ShortenURL(userID, originalURL string) (string, error) {
 	isValid := govalidator.IsURL(originalURL)
 	if !isValid {
 		return "", errors.New("invalid original URL")
@@ -31,29 +31,32 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 	shortID := uuid.NewString()
 	shortURL := s.baseURL + "/" + shortID
 
-	ety := models.ShortenEty{
-		UserID:      userID,
-		ShortID:     shortID,
-		OriginalURL: originalURL,
-	}
+	s.storage.SaveInMemory(userID, shortID, originalURL)
+	s.storage.WriteToFile(userID, shortID, originalURL)
 
-	err := s.db.Save(ctx, ety)
-	if err != nil {
-		return "", err
-	}
+	// ety := models.ShortenEty{
+	// 	UserID:      userID,
+	// 	ShortID:     shortID,
+	// 	OriginalURL: originalURL,
+	// }
+
+	// err := s.db.Save(ctx, ety)
+	// if err != nil {
+	// 	return "", err
+	// }
 
 	return shortURL, nil
 }
 
-func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
-	ety, err := s.db.GetByShortID(ctx, id)
-	return ety.OriginalURL, err
+func (s *ShortURL) ExpandURL(id string) (string, error) {
+	//ety, err := s.db.GetByShortID(ctx, id)
+	return s.storage.GetByShortID(id)
 }
 
-func (s *ShortURL) GetHistoryByUserID(ctx context.Context, id string) ([]models.UserHistoryItem, error) {
-	history, err := s.db.GetByUserID(ctx, id)
-	if err != nil {
-		return nil, err
+func (s *ShortURL) GetHistoryByUserID(id string) ([]models.UserHistoryItem, error) {
+	history := s.storage.GetAllByUserID(id)
+	if history == nil {
+		return nil, errors.New("not found")
 	}
 
 	result := make([]models.UserHistoryItem, len(history))
@@ -111,5 +114,5 @@ func (s *ShortURL) GetHistoryByUserID(ctx context.Context, id string) ([]models.
 // }
 
 func (s *ShortURL) PingDB(ctx context.Context) error {
-	return s.db.Ping(context.Background())
+	return s.db.PingDB(context.Background())
 }

@@ -35,10 +35,12 @@ func Run() error {
 		}
 	}
 
-	shortURL, err := services.NewShortURL(cfg.BaseURL, db)
+	storage, err := repository.NewStorage(cfg.FileStoragePath)
 	if err != nil {
-		return fmt.Errorf("error creating new NewShortURL: %v", err)
+		return fmt.Errorf("error creating NewStorage: %v", err)
 	}
+
+	shortURL := services.NewShortURL(cfg.BaseURL, db, storage)
 
 	handler := handlers.NewHandler(shortURL, time.Duration(cfg.CtxTimeout)*time.Second)
 	router := routes.NewRouter(handler)

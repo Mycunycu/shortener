@@ -7,8 +7,8 @@ import (
 )
 
 type ShortURLService interface {
-	ShortenURL(context.Context, string, string) (string, error)
-	ExpandURL(context.Context, string) (string, error)
-	GetHistoryByUserID(context.Context, string) ([]models.UserHistoryItem, error)
+	ShortenURL(string, string) (string, error)
+	ExpandURL(string) (string, error)
+	GetHistoryByUserID(string) ([]models.UserHistoryItem, error)
 	PingDB(context.Context) error
 }
