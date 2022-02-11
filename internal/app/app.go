@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -48,22 +49,28 @@ func Run() error {
 	srv := server.NewServer(cfg.ServerAddress, router)
 
 	go func() {
-		err := srv.Run()
-		if err != nil {
+		err := srv.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen error: %s\n", err)
 		}
 	}()
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT)
+	signal.Notify(done, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT)
 
 	<-done
 
 	timeoutCtx, timeoutCtxCancel := context.WithTimeout(context.Background(), time.Duration(cfg.CtxTimeout)*time.Second)
-	defer timeoutCtxCancel()
+	defer func() {
+		timeoutCtxCancel()
+	}()
 
 	if err := srv.Shutdown(timeoutCtx); err != nil {
 		log.Fatalf("server shutdown failed:%+v", err)
+	}
+
+	if err == http.ErrServerClosed {
+		err = nil
 	}
 
 	fmt.Println("Gracefull stopped")

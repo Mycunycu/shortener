@@ -13,7 +13,3 @@ func NewServer(addr string, handler http.Handler) *Server {
 		&http.Server{Addr: addr, Handler: handler},
 	}
 }
-
-func (s *Server) Run() error {
-	return s.ListenAndServe()
-}
