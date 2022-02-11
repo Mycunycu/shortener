@@ -2,54 +2,90 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"github.com/antonevtu/go-musthave-shortener-tpl/internal/cfg"
+	"github.com/antonevtu/go-musthave-shortener-tpl/internal/db"
+	"github.com/antonevtu/go-musthave-shortener-tpl/internal/handlers"
+	"github.com/antonevtu/go-musthave-shortener-tpl/internal/repository"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/Mycunycu/shortener/internal/config"
-	"github.com/Mycunycu/shortener/internal/handlers"
-	"github.com/Mycunycu/shortener/internal/repository"
-	"github.com/Mycunycu/shortener/internal/routes"
-	"github.com/Mycunycu/shortener/internal/server"
 )
 
-func Run() error {
-	cfg := config.New()
-
-	repo, err := repository.NewShortURL(cfg.FileStoragePath)
+func Run() {
+	var cfgApp, err = cfg.New()
 	if err != nil {
-		return fmt.Errorf("error creating new NewShortURL: %v", err)
+		log.Fatal(err)
 	}
 
-	handler := handlers.NewHandler(cfg.BaseURL, repo)
-	router := routes.NewRouter(handler)
-	srv := server.NewServer(cfg.ServerAddress, router)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	// database
+	dbPool, err := db.New(ctx, cfgApp.DatabaseDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer dbPool.Close()
+
+	// repository
+	repo, err := repository.New(cfgApp.FileStoragePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer repo.Close()
+
+	// delete thread
+	go deleteLoop(ctx, &dbPool, cfgApp.ToDeleteChan)
+
+	//r := handlers.NewRouter(repo, cfgApp)
+	r := handlers.NewRouter(&dbPool, cfgApp)
+	httpServer := &http.Server{
+		Addr:        cfgApp.ServerAddress,
+		Handler:     r,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
+	}
+
+	// Run server
 	go func() {
-		err := srv.Run()
-		if err != nil {
-			log.Fatalf("listen error: %s\n", err)
+		if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("HTTP server ListenAndServe: %v", err)
 		}
 	}()
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signalChan := make(chan os.Signal, 1)
 
-	<-done
+	signal.Notify(
+		signalChan,
+		syscall.SIGHUP,  // kill -SIGHUP XXXX
+		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
+		syscall.SIGQUIT, // kill -SIGQUIT XXXX
+	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer func() {
-		cancel()
-	}()
+	<-signalChan
+	cancel()
+	log.Print("os.Interrupt - shutting down...\n")
 
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("server shutdown failed:%+v", err)
+	gracefullCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelShutdown()
+
+	if err = httpServer.Shutdown(gracefullCtx); err != nil {
+		log.Printf("shutdown error: %v\n", err)
+	} else {
+		log.Printf("gracefully stopped\n")
 	}
+}
 
-	fmt.Println("Gracefull stopped")
-
-	return nil
+func deleteLoop(ctx context.Context, repo handlers.Repositorier, input chan cfg.ToDeleteItem) {
+	for {
+		select {
+		case item := <-input:
+			_ = repo.SetDeleted(ctx, item)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
