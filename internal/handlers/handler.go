@@ -125,8 +125,12 @@ func (h *Handler) APIShortenURL() http.HandlerFunc {
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, req.URL)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+			if errors.Is(err, helpers.ErrUnique) {
+				w.WriteHeader(http.StatusConflict)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 
 		responce := models.ShortenResponce{Result: shortURL}
@@ -233,7 +237,7 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 		w.Write(jsonResult)
 	}
 }
