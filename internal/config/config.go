@@ -11,8 +11,8 @@ import (
 )
 
 type Config struct {
-	ServerAddress   string `env:"SERVER_ADDRESS"`
-	BaseURL         string `env:"BASE_URL"`
+	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"internal/repository/storage.txt"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	CtxTimeout      int64  `env:"CTX_TIMEOUT" envDefault:"5"`
