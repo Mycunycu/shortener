@@ -43,10 +43,10 @@ func initialize() {
 			cfg.BaseURL = value
 			return nil
 		})
-		flag.Func("f", "path to storage file", func(value string) error {
-			cfg.FileStoragePath = value
-			return nil
-		})
+		// flag.Func("f", "path to storage file", func(value string) error {
+		// 	cfg.FileStoragePath = value
+		// 	return nil
+		// })
 		flag.Func("d", "database url", func(value string) error {
 			cfg.FileStoragePath = value
 			return nil
