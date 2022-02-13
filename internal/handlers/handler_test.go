@@ -225,7 +225,7 @@ func TestShorten(t *testing.T) {
 			w := httptest.NewRecorder()
 			repo := &mocks.Repositorier{}
 			shortURL := services.NewShortURL(cfg.BaseURL, repo)
-			h := NewHandler(shortURL, timeout).ApiShortenURL()
+			h := NewHandler(shortURL, timeout).APIShortenURL()
 
 			repo.On("Save", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("models.ShortenEty")).Return(nil)
 

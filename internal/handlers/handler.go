@@ -99,7 +99,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) ApiShortenURL() http.HandlerFunc {
+func (h *Handler) APIShortenURL() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
