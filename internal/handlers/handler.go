@@ -104,6 +104,8 @@ func (h *Handler) APIShortenURL() http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
+		w.Header().Set("content-type", "application/json")
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -140,7 +142,6 @@ func (h *Handler) APIShortenURL() http.HandlerFunc {
 			return
 		}
 
-		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(jsonResp)
 	}
@@ -230,13 +231,13 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		w.Header().Set("Content-Type", "application/json")
 		jsonResult, err := json.Marshal(result)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(jsonResult)
 	}
