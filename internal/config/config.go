@@ -11,10 +11,10 @@ import (
 )
 
 type Config struct {
-	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
+	ServerAddress   string `env:"SERVER_ADDRESS"`
+	BaseURL         string `env:"BASE_URL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"internal/repository/storage.txt"`
-	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"postgres://user:123@localhost:5432/practicum?sslmode=disable"`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
 	CtxTimeout      int64  `env:"CTX_TIMEOUT" envDefault:"5"`
 	MigrationPath   string `env:"MIGRATION_PATH" envDefault:"file://internal/repository/migrations"`
 }
