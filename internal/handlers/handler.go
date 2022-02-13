@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/services"
 	"github.com/go-chi/chi/v5"
@@ -57,8 +58,12 @@ func (h *Handler) ShortenURL() http.HandlerFunc {
 
 		shortURL, err := h.shortURL.ShortenURL(ctx, userID, originalURL)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+			if errors.Is(err, helpers.ErrUnique) {
+				w.WriteHeader(http.StatusConflict)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
 		}
 
 		w.Header().Set("content-type", "text/html; charset=UTF-8")

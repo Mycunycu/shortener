@@ -9,6 +9,7 @@ import (
 type Repositorier interface {
 	Save(context.Context, models.ShortenEty) error
 	GetByShortID(context.Context, string) (models.ShortenEty, error)
+	GetByOriginalURL(context.Context, string) (models.ShortenEty, error)
 	GetByUserID(context.Context, string) ([]models.ShortenEty, error)
 	PingDB(context.Context) error
 	SaveBatch(context.Context, []models.ShortenEty) error

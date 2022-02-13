@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/repository"
 	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 )
 
 var _ ShortURLService = (*ShortURL)(nil)
@@ -15,7 +18,6 @@ var _ ShortURLService = (*ShortURL)(nil)
 type ShortURL struct {
 	baseURL string
 	db      repository.Repositorier
-	//storage repository.Storager
 }
 
 func NewShortURL(baseURL string, db repository.Repositorier) *ShortURL {
@@ -29,7 +31,6 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 	}
 
 	shortID := uuid.NewString()
-	shortURL := s.baseURL + "/" + shortID
 
 	ety := models.ShortenEty{
 		UserID:      userID,
@@ -38,11 +39,18 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 	}
 
 	err := s.db.Save(ctx, ety)
-	if err != nil {
-		return "", err
+	var targetErr *pgconn.PgError
+	if errors.As(err, &targetErr) && targetErr.Code == pgerrcode.UniqueViolation {
+		ety, err = s.db.GetByOriginalURL(ctx, originalURL)
+		if err != nil {
+			return "", err
+		}
+
+		err = helpers.ErrUnique
 	}
 
-	return shortURL, nil
+	shortURL := s.baseURL + "/" + ety.ShortID
+	return shortURL, err
 }
 
 func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {

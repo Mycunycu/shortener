@@ -62,12 +62,23 @@ func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (d *Database) GetByShortID(ctx context.Context, id string) (models.ShortenEty, error) {
 	sql := "SELECT * FROM shortened WHERE short_id = $1"
 	row := d.QueryRow(ctx, sql, id)
+
+	var ety models.ShortenEty
+	var etyID int
+	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+	return ety, err
+}
+
+func (d *Database) GetByOriginalURL(ctx context.Context, url string) (models.ShortenEty, error) {
+	sql := "SELECT * FROM shortened WHERE original_url = $1"
+	row := d.QueryRow(ctx, sql, url)
 
 	var ety models.ShortenEty
 	var etyID int
