@@ -21,3 +21,8 @@ vendor/
 # IDEs directories
 .idea
 .vscode
+
+# Project specifics
+backup.txt
+main
+.env

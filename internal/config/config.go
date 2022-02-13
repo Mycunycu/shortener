@@ -2,47 +2,54 @@ package config
 
 import (
 	"flag"
-	"log"
-	"sync"
-
-	"github.com/caarlos0/env"
+	"os"
+	"strings"
 )
 
-type Config struct {
-	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.txt"`
-}
+var defaultProtocol = "http://"
 
-var cfg Config
+var (
+	Address          string
+	AppDomain        string
+	BaseShortenerURL string
+	FilePath         string
+	SecretKey        string
+	DatabaseDSN      string
+)
 
-func New() Config {
-	initialize()
-	return cfg
-}
+// Parse parses flags and gets default values for them from environment variables. Hides details of envs ingestion.
+func Parse() {
+	flag.StringVar(&Address, "a", os.Getenv("SERVER_ADDRESS"), "server address")
+	flag.StringVar(&BaseShortenerURL, "b", os.Getenv("BASE_URL"), "base url for shortened urls")
+	flag.StringVar(&FilePath, "f", os.Getenv("FILE_STORAGE_PATH"), "file path for shortened links")
+	flag.StringVar(&SecretKey, "s", os.Getenv("SECRET_KEY"), "secret key for sessions")
+	flag.StringVar(&DatabaseDSN, "d", os.Getenv("DATABASE_DSN"), "database connection string")
+	flag.Parse()
 
-func initialize() {
-	var once sync.Once
+	if Address == "" {
+		Address = "localhost:8080"
+	}
 
-	once.Do(func() {
-		cfg = Config{}
-		if err := env.Parse(&cfg); err != nil {
-			log.Fatalf("initialize config error: %v", err)
+	addressComponents := strings.Split(Address, defaultProtocol)
+	if len(addressComponents) > 1 {
+		AppDomain = addressComponents[1]
+	} else {
+		AppDomain = addressComponents[0]
+	}
+
+	if BaseShortenerURL == "" {
+		BaseShortenerURL = Address
+
+		if strings.Index(BaseShortenerURL, defaultProtocol) != 0 {
+			BaseShortenerURL = defaultProtocol + BaseShortenerURL
 		}
+	}
 
-		flag.Func("a", "server address", func(value string) error {
-			cfg.ServerAddress = value
-			return nil
-		})
-		flag.Func("b", "base url", func(value string) error {
-			cfg.BaseURL = value
-			return nil
-		})
-		flag.Func("f", "path to storage file", func(value string) error {
-			cfg.FileStoragePath = value
-			return nil
-		})
+	if FilePath == "" {
+		FilePath = "backup.txt"
+	}
 
-		flag.Parse()
-	})
+	if SecretKey == "" {
+		SecretKey = "secret_key"
+	}
 }
