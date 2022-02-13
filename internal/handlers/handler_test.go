@@ -73,8 +73,8 @@ func TestShortenURL(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 			repo := &mocks.Repositorier{}
-			shortUrl := services.NewShortURL(cfg.BaseURL, repo)
-			h := NewHandler(shortUrl, timeout).ShortenURL()
+			shortURL := services.NewShortURL(cfg.BaseURL, repo)
+			h := NewHandler(shortURL, timeout).ShortenURL()
 
 			repo.On("Save", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("models.ShortenEty")).Return(nil)
 
@@ -147,8 +147,8 @@ func TestExpandURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			repo := &mocks.Repositorier{}
-			shortUrl := services.NewShortURL(cfg.BaseURL, repo)
-			h := NewHandler(shortUrl, timeout).ExpandURL()
+			shortURL := services.NewShortURL(cfg.BaseURL, repo)
+			h := NewHandler(shortURL, timeout).ExpandURL()
 
 			repo.On("GetByShortID", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("string")).Return(
 				models.ShortenEty{
@@ -224,8 +224,8 @@ func TestShorten(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, tt.path, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 			repo := &mocks.Repositorier{}
-			shortUrl := services.NewShortURL(cfg.BaseURL, repo)
-			h := NewHandler(shortUrl, timeout).ApiShortenURL()
+			shortURL := services.NewShortURL(cfg.BaseURL, repo)
+			h := NewHandler(shortURL, timeout).ApiShortenURL()
 
 			repo.On("Save", mock.AnythingOfType("*context.timerCtx"), mock.AnythingOfType("models.ShortenEty")).Return(nil)
 
