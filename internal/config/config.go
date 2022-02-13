@@ -14,7 +14,7 @@ type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"internal/repository/storage.txt"`
-	DatabaseDSN     string `env:"DATABASE_DSN"`
+	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"postgres://user:123@localhost:5432/practicum?sslmode=disable"`
 	CtxTimeout      int64  `env:"CTX_TIMEOUT" envDefault:"5"`
 	MigrationPath   string `env:"MIGRATION_PATH" envDefault:"file://internal/repository/migrations"`
 }
@@ -43,12 +43,12 @@ func initialize() {
 			cfg.BaseURL = value
 			return nil
 		})
-		// flag.Func("f", "path to storage file", func(value string) error {
-		// 	cfg.FileStoragePath = value
-		// 	return nil
-		// })
-		flag.Func("d", "database url", func(value string) error {
+		flag.Func("f", "path to storage file", func(value string) error {
 			cfg.FileStoragePath = value
+			return nil
+		})
+		flag.Func("d", "database url", func(value string) error {
+			cfg.DatabaseDSN = value
 			return nil
 		})
 		flag.Func("t", "context timeout", func(value string) error {
