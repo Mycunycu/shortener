@@ -11,6 +11,7 @@ type Repositorier interface {
 	GetByShortID(context.Context, string) (models.ShortenEty, error)
 	GetByUserID(context.Context, string) ([]models.ShortenEty, error)
 	PingDB(context.Context) error
+	SaveBatch(context.Context, []models.ShortenEty) error
 }
 
 type Storager interface {

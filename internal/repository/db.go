@@ -97,3 +97,25 @@ func (d *Database) GetByUserID(ctx context.Context, id string) ([]models.Shorten
 
 	return history, err
 }
+
+func (d *Database) SaveBatch(ctx context.Context, data []models.ShortenEty) error {
+	tx, err := d.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
+	stmt, err := tx.Prepare(ctx, "SaveBatch", sql)
+	if err != nil {
+		return err
+	}
+
+	for _, ety := range data {
+		_, err := tx.Exec(ctx, stmt.Name, ety.UserID, ety.ShortID, ety.OriginalURL)
+		if err != nil {
+			return tx.Rollback(ctx)
+		}
+	}
+
+	return tx.Commit(ctx)
+}

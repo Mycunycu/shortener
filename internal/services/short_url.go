@@ -78,3 +78,30 @@ func (s *ShortURL) GetHistoryByUserID(ctx context.Context, id string) ([]models.
 func (s *ShortURL) PingDB(ctx context.Context) error {
 	return s.db.PingDB(context.Background())
 }
+
+func (s *ShortURL) ShortenBatch(ctx context.Context, userID string, req models.ShortenBatchRequest) ([]models.BatchItemResponse, error) {
+	dataToSave := make([]models.ShortenEty, len(req))
+	result := make([]models.BatchItemResponse, len(req))
+
+	for i, item := range req {
+		shortID := uuid.NewString()
+
+		dataToSave[i] = models.ShortenEty{
+			UserID:      userID,
+			ShortID:     shortID,
+			OriginalURL: item.OriginalURL,
+		}
+
+		result[i] = models.BatchItemResponse{
+			CorrelationID: item.CorrelationID,
+			ShortURL:      s.baseURL + "/" + shortID,
+		}
+	}
+
+	err := s.db.SaveBatch(ctx, dataToSave)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

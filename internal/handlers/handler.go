@@ -8,11 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
-	"github.com/Mycunycu/shortener/internal/helpers"
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/Mycunycu/shortener/internal/services"
 	"github.com/go-chi/chi/v5"
@@ -101,18 +99,17 @@ func (h *Handler) ApiShortenURL() http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		var req models.ShortenRequest
 
-		err := helpers.DecodeJSONBody(w, r, &req)
+		err = json.Unmarshal(body, &req)
 		if err != nil {
-			var br *helpers.BadRequest
-			if errors.As(err, &br) {
-				http.Error(w, br.Msg, br.Status)
-				return
-			}
-
-			log.Println(err.Error())
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -200,13 +197,39 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
 		defer cancel()
 
-		err := h.shortURL.PingDB(ctx)
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var req models.ShortenBatchRequest
+
+		err = json.Unmarshal(body, &req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		result, err := h.shortURL.ShortenBatch(ctx, userID, req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		jsonResult, err := json.Marshal(result)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResult)
 	}
 }
 
