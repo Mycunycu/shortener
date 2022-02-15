@@ -25,7 +25,7 @@ func NewRouter(h *handlers.Handler) *Router {
 	r.Get("/{id}", h.ExpandURL())
 
 	r.Post("/api/shorten", h.APIShortenURL())
-	r.Get("/user/urls", h.HistoryByUserID())
+	r.Get("/api/user/urls", h.HistoryByUserID())
 	r.Get("/ping", h.PingDB())
 	r.Post("/api/shorten/batch", h.ShortenBatchURL())
 
