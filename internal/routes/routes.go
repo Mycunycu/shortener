@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/Mycunycu/shortener/internal/handlers"
+	customMiddleware "github.com/Mycunycu/shortener/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -17,11 +18,16 @@ func NewRouter(h *handlers.Handler) *Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(customMiddleware.GzipCompress)
+	r.Use(customMiddleware.GzipDecompress)
 
 	r.Post("/", h.ShortenURL())
 	r.Get("/{id}", h.ExpandURL())
 
-	r.Post("/api/shorten", h.Shorten())
+	r.Post("/api/shorten", h.APIShortenURL())
+	r.Get("/api/user/urls", h.HistoryByUserID())
+	r.Get("/ping", h.PingDB())
+	r.Post("/api/shorten/batch", h.ShortenBatchURL())
 
 	return &Router{r}
 }
