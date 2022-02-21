@@ -57,7 +57,7 @@ func (d *Database) PingDB(ctx context.Context) error {
 }
 
 func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
-	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3, $4)"
 	_, err := d.Exec(ctx, sql, e.UserID, e.ShortID, e.OriginalURL, e.Deleted)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (d *Database) SaveBatch(ctx context.Context, data []models.ShortenEty) erro
 		return err
 	}
 
-	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3, $4)"
 	stmt, err := tx.Prepare(ctx, "SaveBatch", sql)
 	if err != nil {
 		return err
