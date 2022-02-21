@@ -58,7 +58,7 @@ func (d *Database) PingDB(ctx context.Context) error {
 
 func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
 	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
-	_, err := d.Exec(ctx, sql, e.UserID, e.ShortID, e.OriginalURL)
+	_, err := d.Exec(ctx, sql, e.UserID, e.ShortID, e.OriginalURL, e.Deleted)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (d *Database) GetByShortID(ctx context.Context, id string) (models.ShortenE
 
 	var ety models.ShortenEty
 	var etyID int
-	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 	return ety, err
 }
 
@@ -82,7 +82,7 @@ func (d *Database) GetByOriginalURL(ctx context.Context, url string) (models.Sho
 
 	var ety models.ShortenEty
 	var etyID int
-	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 	return ety, err
 }
 
@@ -98,7 +98,7 @@ func (d *Database) GetByUserID(ctx context.Context, id string) ([]models.Shorten
 	history := make([]models.ShortenEty, 0)
 
 	for rows.Next() {
-		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func (d *Database) SaveBatch(ctx context.Context, data []models.ShortenEty) erro
 	}
 
 	for _, ety := range data {
-		_, err := tx.Exec(ctx, stmt.Name, ety.UserID, ety.ShortID, ety.OriginalURL)
+		_, err := tx.Exec(ctx, stmt.Name, ety.UserID, ety.ShortID, ety.OriginalURL, ety.Deleted)
 		if err != nil {
 			return tx.Rollback(ctx)
 		}

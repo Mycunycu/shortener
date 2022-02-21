@@ -243,6 +243,33 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 	}
 }
 
+func (h *Handler) DeleteShortened() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var IDs []string
+
+		err = json.Unmarshal(body, &IDs)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// TODO
+
+		w.WriteHeader(http.StatusAccepted)
+	}
+}
+
 func (h *Handler) setCookie(w http.ResponseWriter, name, value string) {
 	encryptedValue := h.encryptCookieValue(value, secretKey)
 

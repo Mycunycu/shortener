@@ -12,6 +12,7 @@ type ShortenEty struct {
 	UserID      string `json:"user_id"`
 	ShortID     string `json:"short_id"`
 	OriginalURL string `json:"original_url"`
+	Deleted     bool   `json:"deleted"`
 }
 
 type ShortenItem struct {
