@@ -90,7 +90,7 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
 		if err != nil {
-			if errors.Is(err, helpers.DeletedItem) {
+			if errors.Is(err, helpers.ErrDeletedItem) {
 				w.WriteHeader(http.StatusGone)
 				return
 			}

@@ -61,7 +61,7 @@ func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
 	}
 
 	if ety.Deleted {
-		return "", helpers.DeletedItem
+		return "", helpers.ErrDeletedItem
 	}
 
 	return ety.OriginalURL, err
