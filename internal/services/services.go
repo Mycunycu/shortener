@@ -12,4 +12,5 @@ type ShortURLService interface {
 	GetHistoryByUserID(context.Context, string) ([]models.UserHistoryItem, error)
 	PingDB(context.Context) error
 	ShortenBatch(context.Context, string, models.ShortenBatchRequest) ([]models.BatchItemResponse, error)
+	DeleteBatch(context.Context, string, []string) error
 }

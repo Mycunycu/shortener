@@ -90,6 +90,11 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
 		if err != nil {
+			if errors.Is(err, helpers.DeletedItem) {
+				w.WriteHeader(http.StatusGone)
+				return
+			}
+
 			http.Error(w, err.Error(), http.StatusNoContent)
 			return
 		}
@@ -245,6 +250,9 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 
 func (h *Handler) DeleteShortened() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
+		defer cancel()
+
 		userID, isNewID := h.getUserID(r)
 		if isNewID {
 			h.setCookie(w, cookieName, userID)
@@ -264,7 +272,7 @@ func (h *Handler) DeleteShortened() http.HandlerFunc {
 			return
 		}
 
-		// TODO
+		h.shortURL.DeleteBatch(ctx, userID, IDs)
 
 		w.WriteHeader(http.StatusAccepted)
 	}

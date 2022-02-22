@@ -60,6 +60,10 @@ func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
 		return "", err
 	}
 
+	if ety.Deleted {
+		return "", helpers.DeletedItem
+	}
+
 	return ety.OriginalURL, err
 }
 
@@ -114,4 +118,13 @@ func (s *ShortURL) ShortenBatch(ctx context.Context, userID string, req models.S
 	}
 
 	return result, nil
+}
+
+func (s *ShortURL) DeleteBatch(ctx context.Context, userID string, IDs []string) error {
+	err := s.db.DeleteBatch(ctx, userID, IDs)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

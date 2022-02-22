@@ -3,12 +3,14 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/Mycunycu/shortener/internal/models"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lib/pq"
 )
 
 var _ Repositorier = (*Database)(nil)
@@ -129,4 +131,25 @@ func (d *Database) SaveBatch(ctx context.Context, data []models.ShortenEty) erro
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (d *Database) DeleteBatch(ctx context.Context, userID string, shortIds []string) error {
+
+	// batch := &pgx.Batch{}
+	// numInserts := len(shortIds)
+
+	sql := "UPDATE shortened SET deleted = true WHERE user_id = $1 and short_id = ANY($2)"
+
+	_, err := d.Exec(ctx, sql, userID, pq.Array(shortIds))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// for _ = range shortIds {
+
+	// 	batch.Queue(sql, r.Time, r.SensorId, r.Temperature, r.CPU)
+	// }
+	// batch.Queue("select count(*) from sensor_data")
+
+	return nil
 }
