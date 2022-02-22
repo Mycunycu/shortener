@@ -121,10 +121,5 @@ func (s *ShortURL) ShortenBatch(ctx context.Context, userID string, req models.S
 }
 
 func (s *ShortURL) DeleteBatch(ctx context.Context, userID string, IDs []string) error {
-	err := s.db.DeleteBatch(ctx, userID, IDs)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.db.DeleteBatch(ctx, userID, IDs)
 }

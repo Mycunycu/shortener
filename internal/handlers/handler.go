@@ -250,9 +250,6 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 
 func (h *Handler) DeleteShortened() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), h.timeout)
-		defer cancel()
-
 		userID, isNewID := h.getUserID(r)
 		if isNewID {
 			h.setCookie(w, cookieName, userID)
@@ -272,7 +269,7 @@ func (h *Handler) DeleteShortened() http.HandlerFunc {
 			return
 		}
 
-		h.shortURL.DeleteBatch(ctx, userID, IDs)
+		go h.shortURL.DeleteBatch(context.Background(), userID, IDs)
 
 		w.WriteHeader(http.StatusAccepted)
 	}
