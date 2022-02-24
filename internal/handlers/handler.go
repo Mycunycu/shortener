@@ -269,7 +269,7 @@ func (h *Handler) DeleteShortened() http.HandlerFunc {
 			return
 		}
 
-		go h.shortURL.DeleteBatch(context.Background(), userID, IDs)
+		go h.shortURL.DeleteBatch(r.Context(), userID, IDs)
 
 		w.WriteHeader(http.StatusAccepted)
 	}
