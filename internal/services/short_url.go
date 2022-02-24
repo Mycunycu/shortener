@@ -36,6 +36,7 @@ func (s *ShortURL) ShortenURL(ctx context.Context, userID, originalURL string) (
 		UserID:      userID,
 		ShortID:     shortID,
 		OriginalURL: originalURL,
+		Deleted:     false,
 	}
 
 	err := s.db.Save(ctx, ety)
@@ -57,6 +58,10 @@ func (s *ShortURL) ExpandURL(ctx context.Context, id string) (string, error) {
 	ety, err := s.db.GetByShortID(ctx, id)
 	if err != nil {
 		return "", err
+	}
+
+	if ety.Deleted {
+		return "", helpers.ErrDeletedItem
 	}
 
 	return ety.OriginalURL, err
@@ -98,6 +103,7 @@ func (s *ShortURL) ShortenBatch(ctx context.Context, userID string, req models.S
 			UserID:      userID,
 			ShortID:     shortID,
 			OriginalURL: item.OriginalURL,
+			Deleted:     false,
 		}
 
 		result[i] = models.BatchItemResponse{
@@ -112,4 +118,8 @@ func (s *ShortURL) ShortenBatch(ctx context.Context, userID string, req models.S
 	}
 
 	return result, nil
+}
+
+func (s *ShortURL) DeleteBatch(ctx context.Context, userID string, IDs []string) error {
+	return s.db.DeleteBatch(ctx, userID, IDs)
 }

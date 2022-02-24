@@ -90,6 +90,11 @@ func (h *Handler) ExpandURL() http.HandlerFunc {
 
 		originalURL, err := h.shortURL.ExpandURL(ctx, id)
 		if err != nil {
+			if errors.Is(err, helpers.ErrDeletedItem) {
+				w.WriteHeader(http.StatusGone)
+				return
+			}
+
 			http.Error(w, err.Error(), http.StatusNoContent)
 			return
 		}
@@ -240,6 +245,33 @@ func (h *Handler) ShortenBatchURL() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(jsonResult)
+	}
+}
+
+func (h *Handler) DeleteShortened() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, isNewID := h.getUserID(r)
+		if isNewID {
+			h.setCookie(w, cookieName, userID)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var IDs []string
+
+		err = json.Unmarshal(body, &IDs)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		go h.shortURL.DeleteBatch(r.Context(), userID, IDs)
+
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lib/pq"
 )
 
 var _ Repositorier = (*Database)(nil)
@@ -57,8 +58,8 @@ func (d *Database) PingDB(ctx context.Context) error {
 }
 
 func (d *Database) Save(ctx context.Context, e models.ShortenEty) error {
-	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
-	_, err := d.Exec(ctx, sql, e.UserID, e.ShortID, e.OriginalURL)
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3, $4)"
+	_, err := d.Exec(ctx, sql, e.UserID, e.ShortID, e.OriginalURL, e.Deleted)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (d *Database) GetByShortID(ctx context.Context, id string) (models.ShortenE
 
 	var ety models.ShortenEty
 	var etyID int
-	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 	return ety, err
 }
 
@@ -82,7 +83,7 @@ func (d *Database) GetByOriginalURL(ctx context.Context, url string) (models.Sho
 
 	var ety models.ShortenEty
 	var etyID int
-	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+	err := row.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 	return ety, err
 }
 
@@ -98,7 +99,7 @@ func (d *Database) GetByUserID(ctx context.Context, id string) ([]models.Shorten
 	history := make([]models.ShortenEty, 0)
 
 	for rows.Next() {
-		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL)
+		err = rows.Scan(&etyID, &ety.UserID, &ety.ShortID, &ety.OriginalURL, &ety.Deleted)
 		if err != nil {
 			return nil, err
 		}
@@ -115,18 +116,29 @@ func (d *Database) SaveBatch(ctx context.Context, data []models.ShortenEty) erro
 		return err
 	}
 
-	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3)"
+	sql := "INSERT INTO shortened VALUES (default, $1, $2, $3, $4)"
 	stmt, err := tx.Prepare(ctx, "SaveBatch", sql)
 	if err != nil {
 		return err
 	}
 
 	for _, ety := range data {
-		_, err := tx.Exec(ctx, stmt.Name, ety.UserID, ety.ShortID, ety.OriginalURL)
+		_, err := tx.Exec(ctx, stmt.Name, ety.UserID, ety.ShortID, ety.OriginalURL, ety.Deleted)
 		if err != nil {
 			return tx.Rollback(ctx)
 		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (d *Database) DeleteBatch(ctx context.Context, userID string, shortIds []string) error {
+	sql := "UPDATE shortened SET deleted = true WHERE user_id = $1 and short_id = ANY($2)"
+
+	_, err := d.Exec(ctx, sql, userID, pq.Array(shortIds))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
